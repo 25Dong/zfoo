@@ -13,17 +13,16 @@
 
 package com.zfoo.orm.manager;
 
-import com.mongodb.client.ClientSession;
+import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
-import com.zfoo.orm.model.cache.IEntityCaches;
-import com.zfoo.orm.model.entity.IEntity;
+import com.zfoo.orm.cache.IEntityCache;
+import com.zfoo.orm.model.IEntity;
 import org.bson.Document;
 
 import java.util.Collection;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public interface IOrmManager {
 
@@ -33,15 +32,15 @@ public interface IOrmManager {
 
     void initAfter();
 
-
-    <E extends IEntity<?>> IEntityCaches<?, E> getEntityCaches(Class<E> clazz);
-
-    Collection<IEntityCaches<?, ?>> getAllEntityCaches();
-
     /**
-     * 获取一个会话
+     * EN:Get Mongo Client, through which you can get other databases or do some other complex operations
+     * CN:获取MongoClient，通过MongoClient可以获取到其它数据库或者做一些其它的复杂操作
      */
-    ClientSession getClientSession();
+    MongoClient mongoClient();
+
+    <E extends IEntity<?>> IEntityCache<?, E> getEntityCaches(Class<E> clazz);
+
+    Collection<IEntityCache<?, ?>> getAllEntityCaches();
 
     /**
      * 基于对象的orm操作

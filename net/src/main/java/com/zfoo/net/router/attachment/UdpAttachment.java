@@ -12,15 +12,13 @@
 
 package com.zfoo.net.router.attachment;
 
-import com.zfoo.util.math.RandomUtils;
+import com.zfoo.protocol.anno.Protocol;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
-public class UdpAttachment implements IAttachment {
-
-    public static final transient short PROTOCOL_ID = 2;
+@Protocol(id = 3)
+public class UdpAttachment {
 
     private String host;
     private int port;
@@ -30,21 +28,6 @@ public class UdpAttachment implements IAttachment {
         attachment.host = host;
         attachment.port = port;
         return attachment;
-    }
-
-    @Override
-    public AttachmentType packetType() {
-        return AttachmentType.UDP_PACKET;
-    }
-
-    @Override
-    public int executorConsistentHash() {
-        return RandomUtils.randomInt();
-    }
-
-    @Override
-    public short protocolId() {
-        return PROTOCOL_ID;
     }
 
     public String getHost() {

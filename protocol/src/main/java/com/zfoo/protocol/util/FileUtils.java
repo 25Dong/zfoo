@@ -24,8 +24,7 @@ import java.util.Queue;
 /**
  * 文件操作工具类
  *
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public abstract class FileUtils {
 
@@ -49,6 +48,7 @@ public abstract class FileUtils {
      * </pre>
      */
     public static final String LS = System.lineSeparator();
+    public static final String LS_REGEX = "\\r?\\n";
     public static final String UNIX_LS = "\\n";
     public static final String WINDOWS_LS = "\\r\\n";
     // The file copy buffer size (30 MB)
@@ -421,7 +421,7 @@ public abstract class FileUtils {
 
 
     public static String readFileToString(final File file) {
-        return StringUtils.joinWith(StringUtils.EMPTY, readFileToStringList(file).toArray());
+        return StringUtils.joinWith(LS, readFileToStringList(file).toArray());
     }
 
     public static List<String> readFileToStringList(final File file) {
@@ -445,14 +445,14 @@ public abstract class FileUtils {
         return list;
     }
 
-
     /**
-     * 以追加的方式写入一个content
+     * 写入一个content
      *
      * @param file    文件的绝对路径
      * @param content 写入的内容
+     * @param append  是否追加
      */
-    public static void writeStringToFile(File file, String content) {
+    public static void writeStringToFile(File file, String content, boolean append) {
         // 字节流
         FileOutputStream fileOutputStream = null;
         // 转换流，设置编码集和解码集 .处理乱码问题，是字节到字符的桥梁
@@ -463,7 +463,7 @@ public abstract class FileUtils {
         // 缓冲流作用是把数据先写入缓冲区，等缓冲区满了，再把数据写到文件里。这样效率就大大提高了
         try {
             // 以追加的方式打开文件
-            fileOutputStream = openOutputStream(file, true);
+            fileOutputStream = openOutputStream(file, append);
             outputStreamWriter = new OutputStreamWriter(fileOutputStream, StringUtils.DEFAULT_CHARSET_NAME);
             bufferedWriter = new BufferedWriter(outputStreamWriter);
             bufferedWriter.write(content);// 写数据

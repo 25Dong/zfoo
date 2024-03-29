@@ -38,21 +38,10 @@ mongostat       # 状态监控工具
 mongotop        # 读写监控工具   
 ```
 
-### 2. studio 3t安装（MongoDB可视化工具），收费
+### 2. Navicat for MongoDB
 
-- 可视化工具直接默认安装即可
-- 3t的补丁
+- 客户端自行下载
 
-```
-每次开机重启脚本重置试用时间，即可重新获得使用权Studio 3T，重置studio 3t的试用时间解决无法使用的问题，并非永久破解。
-1. 将批处理文件studio3t.bat剪贴或复制到如下路径：
-	C:\ProgramData\Microsoft\Windows\Start Menu\Programs\StartUp
-2. 双击重置时间
-```
-
-### 3. MongoDB Compass
-
-- 官方工具，免费，推荐使用
 
 ## Linux
 
@@ -61,8 +50,8 @@ mongotop        # 读写监控工具
 - 把MongoDB下载到/usr/local目录下，在/usr/local下新建文件夹MongoDB
 
 ```
-tar -zxvf mongodb-linux-x86_64-enterprise-rhel70-4.2.0.tgz -C /usr/local
-rename /usr/local/mongodb-linux-x86_64-enterprise-rhel70-4.2.0 mongodb /usr/local/mongodb-linux-x86_64-enterprise-rhel70-4.2.0
+tar -zxvf mongodb-linux-x86_64-ubuntu2204-6.0.6.tgz -C /usr/local
+mv mongodb-linux-x86_64-ubuntu2204-6.0.6 mongodb
 vim /usr/local/mongodb/mongodb.config # 创建自定义配置文件，解压的mongodb安装包没有默认的配置文件
 ```
 
@@ -85,7 +74,7 @@ storage:
 # 生产环境需要设置ip：bind_ip=127.0.0.1,本机ip
 net:
   bindIp: 0.0.0.0
-  port: 22400
+  port: 27017
   maxIncomingConnections: 900
 processManagement:
   fork: true
@@ -138,7 +127,21 @@ mongod: error while loading shared libraries: libnetsnmpmibs.so.31: cannot open 
 如果启动看到上面这个错误，则是缺少net-snmp安装包，yum install net-snmp
 ```
 
-- mongo -port 22400 # 使用mongo客户端链接MongoDB
+- mongosh -port 22400 # 使用mongo客户端链接MongoDB
+```
+dpkg -i mongodb-mongosh_1.10.1_amd64.deb
+mongodb客户端命令行和服务器分开了，需要安装mongosh工具
+```
+
+- vim /etc/security/limits.conf 数据库需要大的文件句柄，保存并退出编辑器，重新启动机器使配置生效
+```
+* soft nofile 65536
+* hard nofile 65536
+root soft nofile 65536
+root hard nofile 65536
+
+# * 表示所有用户 
+```
 
 ### 2.关闭MongoDB服务
 
@@ -172,8 +175,8 @@ systemctl stop mongodb
 
 ### 3.将MongoDB设置为开机自动启动
 
-- vim /usr/lib/systemd/system/mongodb.service，创建启动脚本，systemctl是最新的启动命令，避免用service
-- chmod 754 /usr/lib/systemd/system/mongodb.service，赋予启动脚本可执行的权限
+- vim /etc/systemd/system/mongodb.service，创建启动脚本，systemctl是最新的启动命令，避免用service
+- chmod 754 /etc/systemd/system/mongodb.service，赋予启动脚本可执行的权限
 
 ```bash
 [Unit]
@@ -185,6 +188,7 @@ After=network.target
 [Service]
 #定义Service的运行类型，一般是forking(后台运行) 
 Type=forking
+LimitNOFILE=65536
 
 ExecStart=/usr/local/mongodb/bin/mongod --config /usr/local/mongodb/mongodb.config
 ExecReload=

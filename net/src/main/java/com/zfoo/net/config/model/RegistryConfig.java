@@ -19,24 +19,16 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public class RegistryConfig {
 
     private String center;
+    private String path;
     private String user;
     private String password;
     private Map<String, String> address;
 
-    public static RegistryConfig valueOf(String center, String user, String password, Map<String, String> addressMap) {
-        RegistryConfig config = new RegistryConfig();
-        config.center = center;
-        config.user = user;
-        config.password = password;
-        config.address = addressMap;
-        return config;
-    }
 
     public boolean hasZookeeperAuthor() {
         return !(StringUtils.isBlank(user) || StringUtils.isBlank(password));
@@ -52,6 +44,14 @@ public class RegistryConfig {
 
     public void setCenter(String center) {
         this.center = center;
+    }
+
+    public String getPath() {
+        return path;
+    }
+
+    public void setPath(String path) {
+        this.path = path;
     }
 
     public String getUser() {

@@ -13,24 +13,18 @@
 
 package com.zfoo.protocol.packet;
 
-import com.zfoo.protocol.IPacket;
+
+import com.zfoo.protocol.anno.Protocol;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
-public class SimpleObject implements IPacket {
-
-    public static final transient short PROTOCOL_ID = 104;
+@Protocol(id = 104)
+public class SimpleObject {
 
     private int c;
 
     private boolean g;
-
-    @Override
-    public short protocolId() {
-        return PROTOCOL_ID;
-    }
 
     public int getC() {
         return c;

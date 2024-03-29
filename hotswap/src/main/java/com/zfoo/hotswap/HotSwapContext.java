@@ -4,8 +4,7 @@ import com.zfoo.hotswap.manager.HotSwapManager;
 import com.zfoo.hotswap.service.HotSwapServiceMBean;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public class HotSwapContext {
 

@@ -3,8 +3,7 @@ package com.zfoo.hotswap.service;
 import javax.management.MXBean;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 @MXBean
 public interface IHotSwapServiceMBean {

@@ -12,24 +12,28 @@
 
 package com.zfoo.boot;
 
+import com.zfoo.boot.graalvm.GraalvmOrmHints;
 import com.zfoo.orm.OrmContext;
+import com.zfoo.orm.accessor.MongodbAccessor;
+import com.zfoo.orm.config.OrmConfig;
 import com.zfoo.orm.manager.OrmManager;
-import com.zfoo.orm.model.accessor.MongodbAccessor;
-import com.zfoo.orm.model.config.OrmConfig;
-import com.zfoo.orm.model.query.MongodbQuery;
+import com.zfoo.orm.query.MongodbQuery;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.ImportRuntimeHints;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 @Configuration(proxyBeanMethods = false)
 @ConditionalOnBean(OrmConfig.class)
+@ImportRuntimeHints(GraalvmOrmHints.class)
 public class OrmAutoConfiguration {
 
+    // OrmConfig in the specific business
+    // If the OrmConfig bean is not configured in the business, then the Orm automatic assembly here will not take effect.
     @Bean
     @ConditionalOnBean(OrmConfig.class)
     public OrmManager ormManager(OrmConfig ormConfig) {

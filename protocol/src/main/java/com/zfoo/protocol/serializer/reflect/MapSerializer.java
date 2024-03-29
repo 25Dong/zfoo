@@ -19,13 +19,11 @@ import com.zfoo.protocol.registration.field.IFieldRegistration;
 import com.zfoo.protocol.registration.field.MapField;
 import io.netty.buffer.ByteBuf;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public class MapSerializer implements ISerializer {
 
@@ -41,6 +39,7 @@ public class MapSerializer implements ISerializer {
         Map<?, ?> map = (Map<?, ?>) object;
         MapField mapField = (MapField) fieldRegistration;
 
+        // map有几组key、value
         int size = map.size();
         if (size == 0) {
             ByteBufUtils.writeInt(buffer, 0);
@@ -48,6 +47,7 @@ public class MapSerializer implements ISerializer {
         }
         ByteBufUtils.writeInt(buffer, size);
 
+        // buffer中顺序写入
         for (Map.Entry<?, ?> entry : map.entrySet()) {
             mapField.getMapKeyRegistration().serializer().writeObject(buffer, entry.getKey(), mapField.getMapKeyRegistration());
 
@@ -57,13 +57,9 @@ public class MapSerializer implements ISerializer {
 
     @Override
     public Object readObject(ByteBuf buffer, IFieldRegistration fieldRegistration) {
-        int size = ByteBufUtils.readInt(buffer);
-        if (size <= 0) {
-            return Collections.EMPTY_MAP;
-        }
-
-        MapField mapField = (MapField) fieldRegistration;
-        Map<Object, Object> map = new HashMap<>(CollectionUtils.comfortableCapacity(size));
+        var size = ByteBufUtils.readInt(buffer);
+        var mapField = (MapField) fieldRegistration;
+        Map<Object, Object> map = CollectionUtils.newMap(size);
 
         for (int i = 0; i < size; i++) {
             Object key = mapField.getMapKeyRegistration().serializer().readObject(buffer, mapField.getMapKeyRegistration());
@@ -73,5 +69,18 @@ public class MapSerializer implements ISerializer {
             map.put(key, value);
         }
         return map;
+    }
+
+    @Override
+    public Object defaultValue(IFieldRegistration fieldRegistration) {
+        return new HashMap<>();
+    }
+
+    @Override
+    public int predictionLength(IFieldRegistration fieldRegistration) {
+        var mapField = (MapField) fieldRegistration;
+        var keyLength = mapField.getMapKeyRegistration().serializer().predictionLength(mapField.getMapKeyRegistration());
+        var valueLength = mapField.getMapValueRegistration().serializer().predictionLength(mapField.getMapValueRegistration());
+        return 7 * (keyLength + valueLength);
     }
 }

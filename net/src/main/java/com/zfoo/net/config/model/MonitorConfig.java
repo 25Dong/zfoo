@@ -17,8 +17,7 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public class MonitorConfig {
 

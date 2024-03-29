@@ -13,16 +13,15 @@
 
 package com.zfoo.net.core.websocket.server;
 
+import com.zfoo.net.core.HostAndPort;
 import com.zfoo.net.core.websocket.WebsocketServer;
-import com.zfoo.util.ThreadUtils;
-import com.zfoo.util.net.HostAndPort;
+import com.zfoo.protocol.util.ThreadUtils;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 @Ignore
 public class WebsocketServerTest {
@@ -31,7 +30,7 @@ public class WebsocketServerTest {
     public void startServer() {
         var context = new ClassPathXmlApplicationContext("config.xml");
 
-        var server = new WebsocketServer(HostAndPort.valueOf("127.0.0.1:9000"));
+        var server = new WebsocketServer(HostAndPort.valueOf("0.0.0.0:9000"));
         server.start();
 
         ThreadUtils.sleep(Long.MAX_VALUE);

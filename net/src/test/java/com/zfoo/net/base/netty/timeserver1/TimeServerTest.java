@@ -1,6 +1,6 @@
 package com.zfoo.net.base.netty.timeserver1;
 
-import com.zfoo.util.ThreadUtils;
+import com.zfoo.protocol.util.ThreadUtils;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -15,7 +15,7 @@ import org.junit.Test;
 /**
  * 没有考虑到半包读写的服务器
  *
- * @author jaysunxiao
+ * @author godotg
  * @version 1.0
  * @since 2017 05.22 18:23
  */

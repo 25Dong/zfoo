@@ -33,16 +33,15 @@ rm -rf JDK的安装路径
 把JDK下载到/usr/local目录下，在/usr/local下新建文件夹java
 ```
 
-- tar -zxvf openjdk-11+28_linux-x64_bin.tar.gz -C /usr/local
-- rename jdk-11 java jdk-11
+- tar -zxvf openjdk-17.0.2_linux-x64_bin.tar.gz -C /usr/local
+- mv jdk-17.0.2 java
 
 - vim /etc/profile
 
 ```
 JAVA_HOME=/usr/local/java
-JRE_HOME=$JAVA_HOME/lib
 PATH=$JAVA_HOME/bin:$PATH
-export JAVA_HOME JRE_HOME PATH
+export JAVA_HOME PATH
 ```
 
 - source /etc/profile，加载环境变量
@@ -56,17 +55,8 @@ export JAVA_HOME JRE_HOME PATH
 
 # 三、Linux内核参数设置
 
-- 文件句柄设置
-
+- vim /etc/sysctl.conf，然后执行sysctl -p使参数生效，永久生效
 ```
-root身份编辑 vim /etc/security/limits.conf， * 表示所有用户
-
-root soft nofile 1000000
-root hard nofile 1000000
-* soft nofile 1000000
-* hard nofile 1000000
-
-vim /etc/sysctl.conf，然后执行sysctl -p使参数生效，永久生效
 
 # ******************* SYN状态的内核参数调优 *******************
 # 新建连接如果无响应，内核要发送多少次SYN连接才放弃，默认值为5

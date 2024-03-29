@@ -14,12 +14,11 @@
 package com.zfoo.net.core.http;
 
 import com.zfoo.net.core.AbstractServer;
+import com.zfoo.net.core.HostAndPort;
 import com.zfoo.net.handler.ServerRouteHandler;
 import com.zfoo.net.handler.codec.http.HttpCodecHandler;
-import com.zfoo.net.packet.model.DecodedPacketInfo;
+import com.zfoo.net.packet.DecodedPacketInfo;
 import com.zfoo.protocol.util.IOUtils;
-import com.zfoo.util.net.HostAndPort;
-import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpObjectAggregator;
@@ -29,10 +28,9 @@ import io.netty.handler.stream.ChunkedWriteHandler;
 import java.util.function.Function;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
-public class HttpServer extends AbstractServer {
+public class HttpServer extends AbstractServer<SocketChannel> {
 
     /**
      * http的地址解析器
@@ -45,19 +43,11 @@ public class HttpServer extends AbstractServer {
     }
 
     @Override
-    public ChannelInitializer<SocketChannel> channelChannelInitializer() {
-        return new ChannelHandlerInitializer();
-    }
-
-
-    private class ChannelHandlerInitializer extends ChannelInitializer<SocketChannel> {
-        @Override
-        protected void initChannel(SocketChannel channel) {
-            channel.pipeline().addLast(new HttpServerCodec(8 * IOUtils.BYTES_PER_KB, 16 * IOUtils.BYTES_PER_KB, 16 * IOUtils.BYTES_PER_KB));
-            channel.pipeline().addLast(new HttpObjectAggregator(16 * IOUtils.BYTES_PER_MB));
-            channel.pipeline().addLast(new ChunkedWriteHandler());
-            channel.pipeline().addLast(new HttpCodecHandler(uriResolver));
-            channel.pipeline().addLast(new ServerRouteHandler());
-        }
+    protected void initChannel(SocketChannel channel) {
+        channel.pipeline().addLast(new HttpServerCodec(8 * IOUtils.BYTES_PER_KB, 16 * IOUtils.BYTES_PER_KB, 16 * IOUtils.BYTES_PER_KB));
+        channel.pipeline().addLast(new HttpObjectAggregator(16 * IOUtils.BYTES_PER_MB));
+        channel.pipeline().addLast(new ChunkedWriteHandler());
+        channel.pipeline().addLast(new HttpCodecHandler(uriResolver));
+        channel.pipeline().addLast(new ServerRouteHandler());
     }
 }

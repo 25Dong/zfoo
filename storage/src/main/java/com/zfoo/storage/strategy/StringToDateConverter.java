@@ -21,8 +21,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public class StringToDateConverter implements Converter<String, Date> {
 
@@ -34,7 +33,7 @@ public class StringToDateConverter implements Converter<String, Date> {
         try {
             return df.parse(source);
         } catch (ParseException e) {
-            throw new IllegalArgumentException(StringUtils.format("字符串[{}]不符合格式要求:[yyyy-MM-dd HH:mm:ss]", source));
+            throw new IllegalArgumentException(StringUtils.format("The string [{}] does not meet the format requirements: [yyyy-MM-dd HH:mm:ss]", source));
         }
     }
 }

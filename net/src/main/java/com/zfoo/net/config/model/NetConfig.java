@@ -13,42 +13,56 @@
 
 package com.zfoo.net.config.model;
 
-import com.zfoo.net.consumer.registry.RegisterVO;
+import com.zfoo.net.consumer.registry.Register;
 import com.zfoo.protocol.generate.GenerateOperation;
 
 import java.util.Objects;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public class NetConfig {
-
-
     private String id;
     private String protocolLocation;
-
     /**
-     * 协议生成属性变量对应于{@link GenerateOperation}
+     * {@link GenerateOperation}
+     */
+    private boolean oneProtocol;
+    /**
+     * {@link GenerateOperation}
      */
     private boolean foldProtocol;
     private String protocolPath;
     private String protocolParam;
-    private boolean generateJsProtocol;
-    private boolean generateCsProtocol;
-    private boolean generateLuaProtocol;
-    private boolean generateGdProtocol;
-    private boolean generateProtobufProtocol;
 
+    /**
+     * 生成协议列表
+     */
+    private String codeLanguages;
+
+    /**
+     * 注册中心
+     */
     private RegistryConfig registry;
+
+    /**
+     * 监控
+     */
     private MonitorConfig monitor;
 
+    /**
+     * 生产者配置
+     */
     private ProviderConfig provider;
+
+    /**
+     * 消费者配置
+     */
     private ConsumerConfig consumer;
 
 
-    public RegisterVO toLocalRegisterVO() {
-        return RegisterVO.valueOf(id, provider, consumer);
+    public Register toLocalRegister() {
+        return Register.valueOf(id, provider, consumer);
     }
 
     public String getId() {
@@ -65,6 +79,14 @@ public class NetConfig {
 
     public void setProtocolLocation(String protocolLocation) {
         this.protocolLocation = protocolLocation;
+    }
+
+    public boolean isOneProtocol() {
+        return oneProtocol;
+    }
+
+    public void setOneProtocol(boolean oneProtocol) {
+        this.oneProtocol = oneProtocol;
     }
 
     public boolean isFoldProtocol() {
@@ -89,30 +111,6 @@ public class NetConfig {
 
     public void setProtocolParam(String protocolParam) {
         this.protocolParam = protocolParam;
-    }
-
-    public boolean isGenerateJsProtocol() {
-        return generateJsProtocol;
-    }
-
-    public void setGenerateJsProtocol(boolean generateJsProtocol) {
-        this.generateJsProtocol = generateJsProtocol;
-    }
-
-    public boolean isGenerateCsProtocol() {
-        return generateCsProtocol;
-    }
-
-    public void setGenerateCsProtocol(boolean generateCsProtocol) {
-        this.generateCsProtocol = generateCsProtocol;
-    }
-
-    public boolean isGenerateLuaProtocol() {
-        return generateLuaProtocol;
-    }
-
-    public void setGenerateLuaProtocol(boolean generateLuaProtocol) {
-        this.generateLuaProtocol = generateLuaProtocol;
     }
 
     public RegistryConfig getRegistry() {
@@ -147,20 +145,12 @@ public class NetConfig {
         this.consumer = consumer;
     }
 
-    public boolean isGenerateGdProtocol() {
-        return generateGdProtocol;
+    public String getCodeLanguages() {
+        return codeLanguages;
     }
 
-    public void setGenerateGdProtocol(boolean generateGdProtocol) {
-        this.generateGdProtocol = generateGdProtocol;
-    }
-
-    public boolean isGenerateProtobufProtocol() {
-        return generateProtobufProtocol;
-    }
-
-    public void setGenerateProtobufProtocol(boolean generateProtobufProtocol) {
-        this.generateProtobufProtocol = generateProtobufProtocol;
+    public void setCodeLanguages(String codeLanguages) {
+        this.codeLanguages = codeLanguages;
     }
 
     @Override

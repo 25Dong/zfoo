@@ -14,8 +14,7 @@
 package com.zfoo.protocol.javassist;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public interface IDGet {
     int getA();

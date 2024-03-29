@@ -14,9 +14,8 @@
 package com.zfoo.net.handler;
 
 import com.zfoo.net.NetContext;
-import com.zfoo.net.packet.model.DecodedPacketInfo;
-import com.zfoo.net.session.model.AttributeType;
-import com.zfoo.net.session.model.Session;
+import com.zfoo.net.packet.DecodedPacketInfo;
+import com.zfoo.net.session.Session;
 import com.zfoo.net.util.SessionUtils;
 import com.zfoo.protocol.util.StringUtils;
 import io.netty.channel.Channel;
@@ -28,15 +27,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 @ChannelHandler.Sharable
-public class BaseRouteHandler extends ChannelInboundHandlerAdapter {
+public abstract class BaseRouteHandler extends ChannelInboundHandlerAdapter {
 
     private static final Logger logger = LoggerFactory.getLogger(BaseRouteHandler.class);
 
     public static final AttributeKey<Session> SESSION_KEY = AttributeKey.valueOf("session");
+
 
     public static Session initChannel(Channel channel) {
         var sessionAttr = channel.attr(SESSION_KEY);
@@ -44,19 +43,11 @@ public class BaseRouteHandler extends ChannelInboundHandlerAdapter {
         var setSuccessful = sessionAttr.compareAndSet(null, session);
         if (!setSuccessful) {
             channel.close();
-            throw new RuntimeException(StringUtils.format("无法设置[channel:{}]的session", channel));
+            throw new RuntimeException(StringUtils.format("The properties of the session[channel:{}] cannot be set", channel));
         }
-
-        try {
-            session.putAttribute(AttributeType.CHANNEL_REMOTE_ADDRESS, StringUtils.substringAfterFirst(channel.remoteAddress().toString(), StringUtils.SLASH));
-        } catch (Throwable t) {
-            // do nothing
-            // to avoid: io.netty.channel.unix.Errors$NativeIoException: readAddress(..) failed: Connection reset by peer
-            // 有些情况当建立连接过后迅速关闭，这个时候取remoteAddress会有异常
-        }
-
         return session;
     }
+
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
@@ -70,11 +61,8 @@ public class BaseRouteHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        try {
-            logger.error("[session{}]未知异常", SessionUtils.sessionInfo(ctx), cause);
-        } finally {
-            ctx.close();
-        }
+        logger.error("{} session force close for exception", SessionUtils.sessionSimpleInfo(ctx), cause);
+        ctx.close();
     }
 
 }

@@ -1,7 +1,7 @@
 package com.zfoo.net.zookeeper.curator.cache;
 
 
-import com.zfoo.util.ThreadUtils;
+import com.zfoo.protocol.util.ThreadUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.framework.recipes.cache.ChildData;
@@ -12,7 +12,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 /**
- * @author jaysunxiao
+ * @author godotg
  * @version 1.0
  * @since 2019-08-25 09:43
  */

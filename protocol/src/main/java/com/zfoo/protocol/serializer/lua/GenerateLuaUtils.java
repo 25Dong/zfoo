@@ -13,35 +13,39 @@
 
 package com.zfoo.protocol.serializer.lua;
 
+import com.zfoo.protocol.anno.Compatible;
 import com.zfoo.protocol.generate.GenerateOperation;
-import com.zfoo.protocol.generate.GenerateProtocolDocument;
 import com.zfoo.protocol.generate.GenerateProtocolFile;
+import com.zfoo.protocol.generate.GenerateProtocolNote;
 import com.zfoo.protocol.generate.GenerateProtocolPath;
 import com.zfoo.protocol.registration.IProtocolRegistration;
 import com.zfoo.protocol.registration.ProtocolRegistration;
-import com.zfoo.protocol.registration.field.IFieldRegistration;
+import com.zfoo.protocol.serializer.CodeLanguage;
+import com.zfoo.protocol.serializer.csharp.GenerateCsUtils;
 import com.zfoo.protocol.serializer.reflect.*;
 import com.zfoo.protocol.util.ClassUtils;
 import com.zfoo.protocol.util.FileUtils;
-import com.zfoo.protocol.util.IOUtils;
 import com.zfoo.protocol.util.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Field;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static com.zfoo.protocol.util.FileUtils.LS;
 import static com.zfoo.protocol.util.StringUtils.TAB;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public abstract class GenerateLuaUtils {
-
-    private static String protocolOutputRootPath = "LuaProtocol/";
+    private static final Logger logger = LoggerFactory.getLogger(GenerateLuaUtils.class);
+    // custom configuration
+    public static String protocolOutputRootPath = "zfoolua";
+    private static String protocolOutputPath = StringUtils.EMPTY;
 
     private static Map<ISerializer, ILuaSerializer> luaSerializerMap;
 
@@ -50,10 +54,8 @@ public abstract class GenerateLuaUtils {
     }
 
     public static void init(GenerateOperation generateOperation) {
-        protocolOutputRootPath = FileUtils.joinPath(generateOperation.getProtocolPath(), protocolOutputRootPath);
-
-        FileUtils.deleteFile(new File(protocolOutputRootPath));
-        FileUtils.createDirectory(protocolOutputRootPath);
+        protocolOutputPath = FileUtils.joinPath(generateOperation.getProtocolPath(), protocolOutputRootPath);
+        FileUtils.deleteFile(new File(protocolOutputPath));
 
         luaSerializerMap = new HashMap<>();
         luaSerializerMap.put(BooleanSerializer.INSTANCE, new LuaBooleanSerializer());
@@ -63,7 +65,6 @@ public abstract class GenerateLuaUtils {
         luaSerializerMap.put(LongSerializer.INSTANCE, new LuaLongSerializer());
         luaSerializerMap.put(FloatSerializer.INSTANCE, new LuaFloatSerializer());
         luaSerializerMap.put(DoubleSerializer.INSTANCE, new LuaDoubleSerializer());
-        luaSerializerMap.put(CharSerializer.INSTANCE, new LuaCharSerializer());
         luaSerializerMap.put(StringSerializer.INSTANCE, new LuaStringSerializer());
         luaSerializerMap.put(ArraySerializer.INSTANCE, new LuaArraySerializer());
         luaSerializerMap.put(ListSerializer.INSTANCE, new LuaListSerializer());
@@ -75,46 +76,130 @@ public abstract class GenerateLuaUtils {
     public static void clear() {
         luaSerializerMap = null;
         protocolOutputRootPath = null;
+        protocolOutputPath = null;
+    }
+
+    // All protocol files are generated in a single protocol file.
+    public static void createProtocolManagerInOneFile(List<IProtocolRegistration> protocolList) throws IOException {
+        createTemplateFile();
+
+        // 生成Protocol.lua文件
+        var protocolManagerTemplate = ClassUtils.getFileFromClassPathToString("lua-one/ProtocolManagerTemplate.lua");
+        var builderImports = new StringBuilder();
+        builderImports.append(TAB).append(StringUtils.format("local Protocols = require(\"{}.Protocols\")", protocolOutputRootPath)).append(LS);
+        builderImports.append(TAB).append(StringUtils.format("local ProtocolBase = require(\"{}.ProtocolBase\")", protocolOutputRootPath)).append(LS);
+        builderImports.append(TAB).append(StringUtils.format("local ProtocolWriter = require(\"{}.ProtocolWriter\")", protocolOutputRootPath)).append(LS);
+        builderImports.append(TAB).append(StringUtils.format("local ProtocolReader = require(\"{}.ProtocolReader\")", protocolOutputRootPath)).append(LS);
+        var protocolBuilder = new StringBuilder();
+        for (var protocol : protocolList) {
+            var protocolId = protocol.protocolId();
+            var protocolName = protocol.protocolConstructor().getDeclaringClass().getSimpleName();
+            protocolBuilder.append(TAB).append(StringUtils.format("protocols[{}] = Protocols.{}", protocolId, protocolName)).append(LS);
+        }
+        protocolManagerTemplate = StringUtils.format(protocolManagerTemplate, StringUtils.EMPTY_JSON, StringUtils.EMPTY_JSON, builderImports.toString().trim(), protocolBuilder.toString().trim());
+        var file = new File(StringUtils.format("{}/{}", protocolOutputPath, "ProtocolManager.lua"));
+        FileUtils.writeStringToFile(file, protocolManagerTemplate, true);
+        logger.info("Generated Lua protocol manager file:[{}] is in path:[{}]", file.getName(), file.getAbsolutePath());
+    }
+
+    public static void createLuaProtocolsInOneFile(List<IProtocolRegistration> registrations) {
+        var protocolTemplate = ClassUtils.getFileFromClassPathToString("lua-one/ProtocolTemplate.lua");
+        var protocolBaseTemplate = ClassUtils.getFileFromClassPathToString("lua-one/ProtocolBaseTemplate.lua");
+        var protocolWriterTemplate = ClassUtils.getFileFromClassPathToString("lua-one/ProtocolWriterTemplate.lua");
+        var protocolReaderTemplate = ClassUtils.getFileFromClassPathToString("lua-one/ProtocolReaderTemplate.lua");
+        var builderProtocol = new StringBuilder();
+        var builderProtocolBase = new StringBuilder();
+        var builderProtocolWriter = new StringBuilder();
+        var builderProtocolReader = new StringBuilder();
+
+        var requireProtocols = StringUtils.format("local Protocols = require(\"{}.Protocols\")", protocolOutputRootPath);
+        builderProtocolBase.append(requireProtocols).append(LS).append(LS);
+        builderProtocolWriter.append(requireProtocols).append(LS).append(LS);
+        builderProtocolReader.append(requireProtocols).append(LS).append(LS);
+
+        for (var protocolRegistration : registrations) {
+            var registration = (ProtocolRegistration) protocolRegistration;
+            var protocolId = registration.protocolId();
+            var registrationConstructor = registration.getConstructor();
+            var protocolClazzName = registrationConstructor.getDeclaringClass().getSimpleName();
+            GenerateProtocolFile.index.set(0);
+
+            var classNote = GenerateProtocolNote.classNote(protocolId, CodeLanguage.Lua, TAB, 0);
+            var valueOfMethod = valueOfMethod(registration);
+            var writePacket = writePacket(registration);
+            var readPacket = readPacket(registration);
+
+            var protocol = StringUtils.format(protocolTemplate, classNote, protocolClazzName, StringUtils.EMPTY_JSON, protocolClazzName, valueOfMethod.trim());
+            var protocolBase = StringUtils.format(protocolBaseTemplate, protocolClazzName, protocolId, protocolClazzName, protocolClazzName, protocolClazzName);
+            var protocolWriter = StringUtils.format(protocolWriterTemplate, protocolClazzName, writePacket.trim());
+            var protocolReader = StringUtils.format(protocolReaderTemplate, protocolClazzName, protocolClazzName, readPacket.trim());
+
+            builderProtocol.append(protocol).append(LS);
+            builderProtocolBase.append(protocolBase).append(LS).append(LS);
+            builderProtocolWriter.append(protocolWriter).append(LS).append(LS);
+            builderProtocolReader.append(protocolReader).append(LS).append(LS);
+        }
+
+        builderProtocol.append(LS).append("local Protocols = {}").append(LS);
+        for (var protocolRegistration : registrations) {
+            var registration = (ProtocolRegistration) protocolRegistration;
+            var registrationConstructor = registration.getConstructor();
+            var protocolClazzName = registrationConstructor.getDeclaringClass().getSimpleName();
+            builderProtocol.append(StringUtils.format("Protocols.{} = {}", protocolClazzName, protocolClazzName)).append(LS);
+        }
+        builderProtocol.append("return Protocols");
+        var protocolsFile = new File(StringUtils.format("{}/{}", protocolOutputPath, "Protocols.lua"));
+        var protocolBaseFile = new File(StringUtils.format("{}/{}", protocolOutputPath, "ProtocolBase.lua"));
+        var protocolWriterFile = new File(StringUtils.format("{}/{}", protocolOutputPath, "ProtocolWriter.lua"));
+        var protocolReaderFile = new File(StringUtils.format("{}/{}", protocolOutputPath, "ProtocolReader.lua"));
+        FileUtils.writeStringToFile(protocolsFile, builderProtocol.toString(), true);
+        FileUtils.writeStringToFile(protocolBaseFile, builderProtocolBase.toString(), true);
+        FileUtils.writeStringToFile(protocolWriterFile, builderProtocolWriter.toString(), true);
+        FileUtils.writeStringToFile(protocolReaderFile, builderProtocolReader.toString(), true);
+        logger.info("Generated Lua protocols file:[{}] is in path:[{}]", protocolsFile.getName(), protocolsFile.getAbsolutePath());
+        logger.info("Generated Lua protocol base file:[{}] is in path:[{}]", protocolBaseFile.getName(), protocolBaseFile.getAbsolutePath());
+        logger.info("Generated Lua protocol writer file:[{}] is in path:[{}]", protocolWriterFile.getName(), protocolWriterFile.getAbsolutePath());
+        logger.info("Generated Lua protocol reader file:[{}] is in path:[{}]", protocolReaderFile.getName(), protocolReaderFile.getAbsolutePath());
     }
 
     public static void createProtocolManager(List<IProtocolRegistration> protocolList) throws IOException {
-        var list = List.of("lua/Buffer/ByteBuffer.lua", "lua/Buffer/Long.lua");
+        createTemplateFile();
 
+        // 生成Protocol.lua文件
+        var protocolManagerTemplate = ClassUtils.getFileFromClassPathToString("lua/ProtocolManagerTemplate.lua");
+        var fieldBuilder = new StringBuilder();
+        var protocolBuilder = new StringBuilder();
+        for (var protocol : protocolList) {
+            var protocolId = protocol.protocolId();
+            var protocolName = protocol.protocolConstructor().getDeclaringClass().getSimpleName();
+            var path = GenerateProtocolPath.getProtocolPath(protocolId);
+            if (StringUtils.isBlank(path)) {
+                fieldBuilder.append(TAB).append(StringUtils.format("local {} = require(\"{}.{}\")", protocolName, protocolOutputRootPath, protocolName)).append(LS);
+            } else {
+                fieldBuilder.append(TAB).append(StringUtils.format("local {} = require(\"{}.{}.{}\")"
+                        , protocolName, protocolOutputRootPath, path.replaceAll(StringUtils.SLASH, StringUtils.PERIOD), protocolName)).append(LS);
+            }
+
+            protocolBuilder.append(TAB).append(StringUtils.format("protocols[{}] = {}", protocolId, protocolName)).append(LS);
+        }
+        protocolManagerTemplate = StringUtils.format(protocolManagerTemplate, StringUtils.EMPTY_JSON, StringUtils.EMPTY_JSON, fieldBuilder.toString().trim(), protocolBuilder.toString().trim());
+        var file = new File(StringUtils.format("{}/{}", protocolOutputPath, "ProtocolManager.lua"));
+        FileUtils.writeStringToFile(file, protocolManagerTemplate, true);
+        logger.info("Generated Lua protocol manager file:[{}] is in path:[{}]", file.getName(), file.getAbsolutePath());
+    }
+
+    private static void createTemplateFile() throws IOException {
+        var list = List.of("lua/Long.lua");
         for (var fileName : list) {
             var fileInputStream = ClassUtils.getFileFromClassPath(fileName);
-            var createFile = new File(StringUtils.format("{}/{}", protocolOutputRootPath, StringUtils.substringAfterFirst(fileName, "lua/")));
+            var createFile = new File(StringUtils.format("{}/{}", protocolOutputPath, StringUtils.substringAfterFirst(fileName, "lua/")));
             FileUtils.writeInputStreamToFile(createFile, fileInputStream);
         }
 
-        // 生成Protocol.lua文件
-        var luaBuilder = new StringBuilder();
-
-        var protocolManagerStr = StringUtils.bytesToString(IOUtils.toByteArray(ClassUtils.getFileFromClassPath("lua/ProtocolManager.lua")));
-        luaBuilder.append(protocolManagerStr);
-
-        luaBuilder.append("function initProtocol()").append(LS);
-        protocolList.stream()
-                .filter(it -> Objects.nonNull(it))
-                .forEach(it -> {
-                    var name = it.protocolConstructor().getDeclaringClass().getSimpleName();
-                    var path = GenerateProtocolPath.getCapitalizeProtocolPath(it.protocolId());
-
-                    if (StringUtils.isBlank(path)) {
-                        luaBuilder.append(TAB).append(StringUtils.format("local {} = require(\"LuaProtocol.{}\")", name, name)).append(LS);
-                    } else {
-                        luaBuilder.append(TAB).append(StringUtils.format("local {} = require(\"LuaProtocol.{}.{}\")"
-                                , name, path.replaceAll(StringUtils.SLASH, StringUtils.PERIOD), name)).append(LS);
-                    }
-                });
-
-        protocolList.stream().filter(it -> Objects.nonNull(it))
-                .forEach(it -> luaBuilder.append(TAB).append(StringUtils.format("protocols[{}] = {}", it.protocolId(), it.protocolConstructor().getDeclaringClass().getSimpleName())).append(LS));
-
-        luaBuilder.append("end").append(LS + LS);
-        luaBuilder.append("ProtocolManager.initProtocol = initProtocol").append(LS);
-        luaBuilder.append("return ProtocolManager").append(LS);
-
-        FileUtils.writeStringToFile(new File(StringUtils.format("{}/{}", protocolOutputRootPath, "ProtocolManager.lua")), luaBuilder.toString());
+        var byteBufferFileName = "lua/ByteBuffer.lua";
+        var byteBufferTemplate = ClassUtils.getFileFromClassPathToString(byteBufferFileName);
+        var byteBufferFile = new File(StringUtils.format("{}/{}", protocolOutputPath, StringUtils.substringAfterFirst(byteBufferFileName, "lua/")));
+        FileUtils.writeStringToFile(byteBufferFile, StringUtils.format(byteBufferTemplate, protocolOutputRootPath), false);
     }
 
     public static void createLuaProtocolFile(ProtocolRegistration registration) {
@@ -123,171 +208,93 @@ public abstract class GenerateLuaUtils {
 
         var protocolId = registration.protocolId();
         var registrationConstructor = registration.getConstructor();
-        var fieldRegistrations = registration.getFieldRegistrations();
-
         var protocolClazzName = registrationConstructor.getDeclaringClass().getSimpleName();
+        var protocolTemplate = ClassUtils.getFileFromClassPathToString("lua/ProtocolTemplate.lua");
 
-        var luaBuilder = new StringBuilder();
+        var classNote = GenerateProtocolNote.classNote(protocolId, CodeLanguage.Lua, TAB, 0);
+        var valueOfMethod = valueOfMethod(registration);
+        var writePacket = writePacket(registration);
+        var readPacket = readPacket(registration);
 
-        // document
-        luaBuilder.append(documentTitle(registration));
+        protocolTemplate = StringUtils.format(protocolTemplate, classNote, protocolClazzName, StringUtils.EMPTY_JSON, protocolClazzName
+                , valueOfMethod.trim(), protocolClazzName, protocolId, protocolClazzName, protocolClazzName
+                , protocolClazzName, protocolClazzName, writePacket.trim(), protocolClazzName, protocolClazzName, readPacket.trim(), protocolClazzName);
 
-        // new object
-        luaBuilder.append(newFunction(registration));
-
-        // protocolId method
-        luaBuilder.append(protocolIdFunction(registration));
-
-        // writeObject method
-        luaBuilder.append(writePacket(registration));
-
-        // readObject method
-        luaBuilder.append(readPacket(registration)).append(LS);
-
-
-        luaBuilder.append(StringUtils.format("return {}", protocolClazzName)).append(LS);
-
-
-        var protocolOutputPath = StringUtils.format("{}/{}/{}.lua"
-                , protocolOutputRootPath
-                , GenerateProtocolPath.getCapitalizeProtocolPath(protocolId)
-                , protocolClazzName);
-        FileUtils.writeStringToFile(new File(protocolOutputPath), luaBuilder.toString());
+        var outputPath = StringUtils.format("{}/{}/{}.lua"
+                , protocolOutputPath, GenerateProtocolPath.getProtocolPath(protocolId), protocolClazzName);
+        var file = new File(outputPath);
+        FileUtils.writeStringToFile(file, protocolTemplate, true);
+        logger.info("Generated Lua protocol file:[{}] is in path:[{}]", file.getName(), file.getAbsolutePath());
     }
 
-    private static String documentTitle(ProtocolRegistration registration) {
-        var protocolId = registration.protocolId();
-        var registrationConstructor = registration.getConstructor();
+    private static String valueOfMethod(ProtocolRegistration registration) {
+        var protocolId = registration.getId();
+        var fields = registration.getFields();
         var fieldRegistrations = registration.getFieldRegistrations();
         var luaBuilder = new StringBuilder();
 
-        var protocolDocument = GenerateProtocolDocument.getProtocolDocument(protocolId);
-        var docTitle = protocolDocument.getKey();
-
-        if (StringUtils.isNotBlank(docTitle)) {
-            Arrays.stream(docTitle.split(LS)).forEach(it -> luaBuilder.append(docToLuaDoc(it)).append(LS));
-            luaBuilder.append(LS);
-        }
-
-        return luaBuilder.toString();
-    }
-
-    private static String newFunction(ProtocolRegistration registration) {
-        short protocolId = registration.getId();
-        var fields = registration.getFields();
-        var protocolClazzName = registration.getConstructor().getDeclaringClass().getSimpleName();
-
-        var protocolDocument = GenerateProtocolDocument.getProtocolDocument(protocolId);
-        var docFieldMap = protocolDocument.getValue();
-
-        var luaBuilder = new StringBuilder();
-
-        luaBuilder.append(StringUtils.format("local {} = {}", protocolClazzName)).append(LS + LS);
-
-        luaBuilder.append(StringUtils.format("function {}:new(", protocolClazzName));
-        luaBuilder.append(StringUtils.joinWith(", ", Arrays.stream(fields).map(it -> it.getName()).collect(Collectors.toList()).toArray()))
-                .append(")")
-                .append(LS);
-        luaBuilder.append(TAB).append("local obj = {").append(LS);
-
-        for (int i = 0; i < fields.length; i++) {
+        for (var i = 0; i < fields.length; i++) {
             var field = fields[i];
-            var propertyName = field.getName();
-
+            var fieldRegistration = fieldRegistrations[i];
+            var fieldName = field.getName();
             // 生成注释
-            var doc = docFieldMap.get(propertyName);
-            if (StringUtils.isNotBlank(doc)) {
-                Arrays.stream(doc.split(LS)).forEach(it -> luaBuilder.append(TAB + TAB).append(docToLuaDoc(it)).append(LS));
+            var fieldNotes = GenerateProtocolNote.fieldNotes(protocolId, fieldName, CodeLanguage.Lua);
+            for(var fieldNote : fieldNotes) {
+                luaBuilder.append(TAB + TAB).append(fieldNote).append(LS);
             }
-
+            var fieldDefaultValue = luaSerializer(fieldRegistration.serializer()).fieldDefaultValue(field, fieldRegistration);
             if (i == fields.length - 1) {
-                luaBuilder.append(TAB + TAB)
-                        .append(StringUtils.format("{} = {}", propertyName, propertyName));
+                luaBuilder.append(TAB + TAB).append(StringUtils.format("{} = {}", fieldName, fieldDefaultValue));
             } else {
-                luaBuilder.append(TAB + TAB)
-                        .append(StringUtils.format("{} = {},", propertyName, propertyName));
+                luaBuilder.append(TAB + TAB).append(StringUtils.format("{} = {},", fieldName, fieldDefaultValue));
             }
-
+            var typeNote = GenerateCsUtils.toCsClassName(field.getGenericType().getTypeName());
             // 生成类型的注释
-            luaBuilder.append(" -- ").append(field.getGenericType().getTypeName()).append(LS);
+            luaBuilder.append(" -- ").append(typeNote).append(LS);
         }
-        luaBuilder.append(TAB).append("}").append(LS);
-        luaBuilder.append(TAB).append("setmetatable(obj, self)").append(LS);
-        luaBuilder.append(TAB).append("self.__index = self").append(LS);
-        luaBuilder.append(TAB).append("return obj").append(LS);
-        luaBuilder.append("end").append(LS).append(LS);
         return luaBuilder.toString();
     }
-
-    private static String protocolIdFunction(ProtocolRegistration registration) {
-        short protocolId = registration.getId();
-        var protocolClazzName = registration.getConstructor().getDeclaringClass().getSimpleName();
-
-        var luaBuilder = new StringBuilder();
-        luaBuilder.append(StringUtils.format("function {}:protocolId()", protocolClazzName)).append(LS);
-        luaBuilder.append(TAB).append(StringUtils.format("return {}", protocolId)).append(LS);
-        luaBuilder.append("end").append(LS).append(LS);
-
-        return luaBuilder.toString();
-    }
-
 
     private static String writePacket(ProtocolRegistration registration) {
         var fields = registration.getFields();
         var fieldRegistrations = registration.getFieldRegistrations();
-        var protocolClazzName = registration.getConstructor().getDeclaringClass().getSimpleName();
-
         var luaBuilder = new StringBuilder();
-        luaBuilder.append(StringUtils.format("function {}:write(buffer, packet)", protocolClazzName)).append(LS);
-
-        luaBuilder.append(TAB).append("if buffer:writePacketFlag(packet) then").append(LS);
-        luaBuilder.append(TAB + TAB).append("return").append(LS);
-        luaBuilder.append(TAB).append("end").append(LS);
-
+        if (registration.isCompatible()) {
+            luaBuilder.append("local beforeWriteIndex = buffer:getWriteOffset()").append(LS);
+            luaBuilder.append(TAB).append(StringUtils.format("buffer:writeInt({})", registration.getPredictionLength())).append(LS);
+        } else {
+            luaBuilder.append(TAB).append("buffer:writeInt(-1)").append(LS);
+        }
         for (var i = 0; i < fields.length; i++) {
             var field = fields[i];
             var fieldRegistration = fieldRegistrations[i];
 
             luaSerializer(fieldRegistration.serializer()).writeObject(luaBuilder, "packet." + field.getName(), 1, field, fieldRegistration);
         }
-
-        luaBuilder.append("end").append(LS).append(LS);
+        if (registration.isCompatible()) {
+            luaBuilder.append(TAB).append(StringUtils.format("buffer:adjustPadding({}, beforeWriteIndex)", registration.getPredictionLength())).append(LS);
+        }
         return luaBuilder.toString();
     }
 
-
     private static String readPacket(ProtocolRegistration registration) {
-        Field[] fields = registration.getFields();
-        IFieldRegistration[] fieldRegistrations = registration.getFieldRegistrations();
-        var protocolClazzName = registration.getConstructor().getDeclaringClass().getSimpleName();
-
-        var jsBuilder = new StringBuilder();
-        jsBuilder.append(StringUtils.format("function {}:read(buffer)", protocolClazzName)).append(LS);
-        jsBuilder.append(TAB).append("if not(buffer:readBoolean()) then").append(LS);
-        jsBuilder.append(TAB + TAB).append("return nil").append(LS);
-        jsBuilder.append(TAB).append("end").append(LS);
-
-
-        jsBuilder.append(TAB).append(StringUtils.format("local packet = {}:new()", protocolClazzName)).append(LS);
-
-
+        var fields = registration.getFields();
+        var fieldRegistrations = registration.getFieldRegistrations();
+        var luaBuilder = new StringBuilder();
         for (int i = 0; i < fields.length; i++) {
-            Field field = fields[i];
-            IFieldRegistration fieldRegistration = fieldRegistrations[i];
-
-            String readObject = luaSerializer(fieldRegistration.serializer()).readObject(jsBuilder, 1, field, fieldRegistration);
-            jsBuilder.append(TAB).append(StringUtils.format("packet.{} = {}", field.getName(), readObject)).append(LS);
+            var field = fields[i];
+            var fieldRegistration = fieldRegistrations[i];
+            if (field.isAnnotationPresent(Compatible.class)) {
+                luaBuilder.append(TAB).append("if buffer:compatibleRead(beforeReadIndex, length) then").append(LS);
+                var compatibleReadObject = luaSerializer(fieldRegistration.serializer()).readObject(luaBuilder, 2, field, fieldRegistration);
+                luaBuilder.append(TAB + TAB).append(StringUtils.format("packet.{} = {}", field.getName(), compatibleReadObject)).append(LS);
+                luaBuilder.append(TAB).append("end").append(LS);
+                continue;
+            }
+            var readObject = luaSerializer(fieldRegistration.serializer()).readObject(luaBuilder, 1, field, fieldRegistration);
+            luaBuilder.append(TAB).append(StringUtils.format("packet.{} = {}", field.getName(), readObject)).append(LS);
         }
-
-        jsBuilder.append(TAB).append("return packet").append(LS);
-
-        jsBuilder.append("end").append(LS);
-
-        return jsBuilder.toString();
+        return luaBuilder.toString();
     }
 
-
-    private static String docToLuaDoc(String doc) {
-        return doc.replaceFirst("//", "--");
-    }
 }

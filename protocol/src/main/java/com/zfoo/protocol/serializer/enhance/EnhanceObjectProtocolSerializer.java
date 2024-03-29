@@ -25,15 +25,14 @@ import java.lang.reflect.Field;
 /**
  * 对应于ObjectProtocolSerializer
  *
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public class EnhanceObjectProtocolSerializer implements IEnhanceSerializer {
 
     @Override
     public void writeObject(StringBuilder builder, String objectStr, Field field, IFieldRegistration fieldRegistration) {
         var objectProtocolField = (ObjectProtocolField) fieldRegistration;
-        builder.append(StringUtils.format("{}.write($1, (IPacket){});", EnhanceUtils.getProtocolRegistrationFieldNameByProtocolId(objectProtocolField.getProtocolId()), objectStr));
+        builder.append(StringUtils.format("{}.write($1,{});", EnhanceUtils.getProtocolRegistrationFieldNameByProtocolId(objectProtocolField.getProtocolId()), objectStr));
     }
 
     @Override
@@ -42,6 +41,15 @@ public class EnhanceObjectProtocolSerializer implements IEnhanceSerializer {
         var result = "result" + GenerateProtocolFile.index.getAndIncrement();
         var protocolName = getProtocolClassCanonicalName(objectProtocolField.getProtocolId());
         builder.append(StringUtils.format("{} {} = ({}){}.read($1);", protocolName, result, protocolName, EnhanceUtils.getProtocolRegistrationFieldNameByProtocolId(objectProtocolField.getProtocolId())));
+        return result;
+    }
+
+    @Override
+    public String defaultValue(StringBuilder builder, Field field, IFieldRegistration fieldRegistration) {
+        var objectProtocolField = (ObjectProtocolField) fieldRegistration;
+        var result = "result" + GenerateProtocolFile.index.getAndIncrement();
+        var protocolName = getProtocolClassCanonicalName(objectProtocolField.getProtocolId());
+        builder.append(StringUtils.format("{} {} = null;", protocolName, result));
         return result;
     }
 

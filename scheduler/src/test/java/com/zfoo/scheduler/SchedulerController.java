@@ -13,14 +13,13 @@
 
 package com.zfoo.scheduler;
 
-import com.zfoo.scheduler.model.anno.Scheduler;
+import com.zfoo.scheduler.anno.Scheduler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 @Component
 public class SchedulerController {

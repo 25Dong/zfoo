@@ -13,19 +13,19 @@
 
 package com.zfoo.protocol.packet;
 
-import com.zfoo.protocol.IPacket;
+
+import com.zfoo.protocol.anno.Compatible;
+import com.zfoo.protocol.anno.Protocol;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
-public class NormalObject implements IPacket {
-
-    public static final transient short PROTOCOL_ID = 101;
+@Protocol(id = 101)
+public class NormalObject {
 
     private byte a;
     private byte[] aaa;
@@ -58,10 +58,13 @@ public class NormalObject implements IPacket {
     private Set<Integer> s;
     private Set<String> ssss;
 
-    @Override
-    public short protocolId() {
-        return PROTOCOL_ID;
-    }
+//    @Compatible(1)
+//    public int outCompatibleValue;
+
+
+
+//    @Compatible(2)
+//    public int outCompatibleValue2;
 
     public byte getA() {
         return a;

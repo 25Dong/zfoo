@@ -25,8 +25,7 @@ import java.lang.reflect.Field;
 import java.util.Map;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public class EnhanceMapSerializer implements IEnhanceSerializer {
 
@@ -80,7 +79,7 @@ public class EnhanceMapSerializer implements IEnhanceSerializer {
 
         var size = "size" + GenerateProtocolFile.index.getAndIncrement();
         builder.append(StringUtils.format("int {}={}.readInt($1);", size, EnhanceUtils.byteBufUtils));
-        builder.append(StringUtils.format("Map {} = CollectionUtils.newFixedMap({});", map, size));
+        builder.append(StringUtils.format("Map {} = CollectionUtils.newMap({});", map, size));
 
         var i = "i" + GenerateProtocolFile.index.getAndIncrement();
         builder.append(StringUtils.format("for(int {}=0; {}<{}; {}++){", i, i, size, i));
@@ -89,6 +88,14 @@ public class EnhanceMapSerializer implements IEnhanceSerializer {
         var valueObject = EnhanceUtils.enhanceSerializer(valueRegistration.serializer()).readObject(builder, field, valueRegistration);
 
         builder.append(StringUtils.format("{}.put({},{});}", map, keyObject, valueObject));
+        return map;
+    }
+
+    @Override
+    public String defaultValue(StringBuilder builder, Field field, IFieldRegistration fieldRegistration) {
+        var mapField = (MapField) fieldRegistration;
+        var map = "map" + GenerateProtocolFile.index.getAndIncrement();
+        builder.append(StringUtils.format("Map {} = CollectionUtils.newMap(0);", map));
         return map;
     }
 

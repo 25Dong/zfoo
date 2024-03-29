@@ -13,22 +13,15 @@
 
 package com.zfoo.net.packet.provider;
 
-import com.zfoo.protocol.IPacket;
+import com.zfoo.protocol.anno.Protocol;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
-public class ProviderMessAsk implements IPacket {
-
-    public static final transient short PROTOCOL_ID = 4000;
+@Protocol(id = 4000)
+public class ProviderMessAsk {
 
     private String message;
-
-    @Override
-    public short protocolId() {
-        return PROTOCOL_ID;
-    }
 
     public String getMessage() {
         return message;

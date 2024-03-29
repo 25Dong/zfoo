@@ -13,32 +13,31 @@
 
 package com.zfoo.net.consumer.event;
 
-import com.zfoo.event.model.event.IEvent;
-import com.zfoo.net.consumer.registry.RegisterVO;
-import com.zfoo.net.session.model.Session;
+import com.zfoo.event.model.IEvent;
+import com.zfoo.net.consumer.registry.Register;
+import com.zfoo.net.session.Session;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public class ConsumerStartEvent implements IEvent {
 
-    private RegisterVO registerVO;
+    private Register providerRegister;
     private Session session;
 
-    public static ConsumerStartEvent valueOf(RegisterVO registerVO, Session session) {
+    public static ConsumerStartEvent valueOf(Register providerRegister, Session session) {
         var event = new ConsumerStartEvent();
-        event.registerVO = registerVO;
+        event.providerRegister = providerRegister;
         event.session = session;
         return event;
     }
 
-    public RegisterVO getRegisterVO() {
-        return registerVO;
+    public Register getProviderRegister() {
+        return providerRegister;
     }
 
-    public void setRegisterVO(RegisterVO registerVO) {
-        this.registerVO = registerVO;
+    public void setProviderRegister(Register providerRegister) {
+        this.providerRegister = providerRegister;
     }
 
     public Session getSession() {

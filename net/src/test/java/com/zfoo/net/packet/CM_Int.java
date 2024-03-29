@@ -13,17 +13,15 @@
 
 package com.zfoo.net.packet;
 
-import com.zfoo.protocol.IPacket;
+import com.zfoo.protocol.anno.Protocol;
 
 import java.util.Objects;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
-public class CM_Int implements IPacket {
-
-    public static final transient short PROTOCOL_ID = 1110;
+@Protocol(id = 1110)
+public class CM_Int {
 
     private boolean flag;
 
@@ -35,7 +33,6 @@ public class CM_Int implements IPacket {
 
     private long d;
 
-    private char e;
 
     private String f;
 
@@ -57,14 +54,6 @@ public class CM_Int implements IPacket {
 
     public byte getA() {
         return a;
-    }
-
-    public char getE() {
-        return e;
-    }
-
-    public void setE(char e) {
-        this.e = e;
     }
 
     public void setA(byte a) {
@@ -95,11 +84,6 @@ public class CM_Int implements IPacket {
         this.d = d;
     }
 
-    @Override
-    public short protocolId() {
-        return PROTOCOL_ID;
-    }
-
 
     @Override
     public boolean equals(Object o) {
@@ -111,12 +95,11 @@ public class CM_Int implements IPacket {
                 b == cm_int.b &&
                 c == cm_int.c &&
                 d == cm_int.d &&
-                e == cm_int.e &&
                 f.equals(cm_int.f);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(flag, a, b, c, d, e, f);
+        return Objects.hash(flag, a, b, c, d, f);
     }
 }

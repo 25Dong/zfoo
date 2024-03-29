@@ -18,7 +18,7 @@ import com.zfoo.net.packet.provider.ProviderMessAnswer;
 import com.zfoo.net.packet.provider.ProviderMessAsk;
 import com.zfoo.net.session.SessionUtils;
 import com.zfoo.protocol.util.JsonUtils;
-import com.zfoo.util.ThreadUtils;
+import com.zfoo.protocol.util.ThreadUtils;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -28,8 +28,7 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 @Ignore
 public class ProviderTest {
@@ -40,7 +39,7 @@ public class ProviderTest {
      * RPC教程：
      * 1.首先必须保证启动zookeeper
      * 2.启动服务提供者，startProvider0，startProvider1，startProvider2
-     * 3.启动服务消费者，startSyncRandomConsumer，startAsyncRandomConsumer，startConsistentSessionConsumer，startShortestTimeConsumer
+     * 3.启动服务消费者，startSyncRandomConsumer，startAsyncRandomConsumer，startConsistentHashConsumer, startCachedConsistentHashConsumer
      * 4.每个消费者都是通过不同的策略消费，注意区别
      */
     @Test
@@ -75,7 +74,7 @@ public class ProviderTest {
         var ask = new ProviderMessAsk();
         ask.setMessage("Hello, this is the consumer!");
         for (int i = 0; i < 1000; i++) {
-            ThreadUtils.sleep(3000);
+            ThreadUtils.sleep(1000);
             var response = NetContext.getConsumer().syncAsk(ask, ProviderMessAnswer.class, null).packet();
             logger.info("消费者请求[{}]收到消息[{}]", i, JsonUtils.object2String(response));
         }
@@ -96,7 +95,7 @@ public class ProviderTest {
         var atomicInteger = new AtomicInteger(0);
 
         for (int i = 0; i < 1000; i++) {
-            ThreadUtils.sleep(3000);
+            ThreadUtils.sleep(1000);
             NetContext.getConsumer().asyncAsk(ask, ProviderMessAnswer.class, null).whenComplete(answer -> {
                 logger.info("消费者请求[{}]收到消息[{}]", atomicInteger.incrementAndGet(), JsonUtils.object2String(answer));
             });
@@ -109,8 +108,8 @@ public class ProviderTest {
      * 一致性hash算法消费方式
      */
     @Test
-    public void startConsistentSessionConsumer() {
-        var context = new ClassPathXmlApplicationContext("provider/consumer_consistent_session_config.xml");
+    public void startConsistentHashConsumer() {
+        var context = new ClassPathXmlApplicationContext("provider/consumer_consistent_hash_config.xml");
         SessionUtils.printSessionInfo();
 
         var ask = new ProviderMessAsk();
@@ -118,7 +117,7 @@ public class ProviderTest {
         var atomicInteger = new AtomicInteger(0);
 
         for (int i = 0; i < 1000; i++) {
-            ThreadUtils.sleep(3000);
+            ThreadUtils.sleep(1000);
             NetContext.getConsumer().asyncAsk(ask, ProviderMessAnswer.class, 100).whenComplete(answer -> {
                 logger.info("消费者请求[{}]收到消息[{}]", atomicInteger.incrementAndGet(), JsonUtils.object2String(answer));
             });
@@ -128,11 +127,11 @@ public class ProviderTest {
     }
 
     /**
-     * 最短时间的消费方式
+     * 缓存的一致性hash算法消费方式
      */
     @Test
-    public void startShortestTimeConsumer() {
-        var context = new ClassPathXmlApplicationContext("provider/consumer_shortest_time_config.xml");
+    public void startCachedConsistentHashConsumer() {
+        var context = new ClassPathXmlApplicationContext("provider/consumer_cached_consistent_config.xml");
         SessionUtils.printSessionInfo();
 
         var ask = new ProviderMessAsk();
@@ -140,14 +139,12 @@ public class ProviderTest {
         var atomicInteger = new AtomicInteger(0);
 
         for (int i = 0; i < 1000; i++) {
-            ThreadUtils.sleep(3000);
-            NetContext.getConsumer().asyncAsk(ask, ProviderMessAnswer.class, null).whenComplete(answer -> {
+            ThreadUtils.sleep(1000);
+            NetContext.getConsumer().asyncAsk(ask, ProviderMessAnswer.class, 100).whenComplete(answer -> {
                 logger.info("消费者请求[{}]收到消息[{}]", atomicInteger.incrementAndGet(), JsonUtils.object2String(answer));
             });
         }
 
         ThreadUtils.sleep(Long.MAX_VALUE);
     }
-
-
 }

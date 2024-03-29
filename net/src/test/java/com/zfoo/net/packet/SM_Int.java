@@ -13,17 +13,15 @@
 
 package com.zfoo.net.packet;
 
-import com.zfoo.protocol.IPacket;
+import com.zfoo.protocol.anno.Protocol;
 
 import java.util.Objects;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
-public class SM_Int implements IPacket {
-
-    public static final transient short PROTOCOL_ID = 1111;
+@Protocol(id = 1111)
+public class SM_Int {
 
     private Boolean flag;
 
@@ -34,8 +32,6 @@ public class SM_Int implements IPacket {
     private Integer c;
 
     private Long d;
-
-    private char e;
 
     private String f;
 
@@ -79,14 +75,6 @@ public class SM_Int implements IPacket {
         this.d = d;
     }
 
-    public char getE() {
-        return e;
-    }
-
-    public void setE(char e) {
-        this.e = e;
-    }
-
     public String getF() {
         return f;
     }
@@ -95,19 +83,12 @@ public class SM_Int implements IPacket {
         this.f = f;
     }
 
-
-    @Override
-    public short protocolId() {
-        return PROTOCOL_ID;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         SM_Int sm_int = (SM_Int) o;
-        return e == sm_int.e &&
-                flag.equals(sm_int.flag) &&
+        return flag.equals(sm_int.flag) &&
                 a.equals(sm_int.a) &&
                 b.equals(sm_int.b) &&
                 c.equals(sm_int.c) &&
@@ -117,7 +98,7 @@ public class SM_Int implements IPacket {
 
     @Override
     public int hashCode() {
-        return Objects.hash(flag, a, b, c, d, e, f);
+        return Objects.hash(flag, a, b, c, d, f);
     }
 }
 

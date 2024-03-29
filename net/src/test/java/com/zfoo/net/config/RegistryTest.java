@@ -1,6 +1,5 @@
 /*
  * Copyright (C) 2020 The zfoo Authors
- *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
  *
@@ -9,15 +8,17 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed
  * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package com.zfoo.net.config;
 
 import com.zfoo.net.config.model.ConsumerConfig;
+import com.zfoo.net.config.model.ConsumerModule;
 import com.zfoo.net.config.model.ProviderConfig;
-import com.zfoo.net.consumer.registry.RegisterVO;
-import com.zfoo.protocol.registration.ProtocolModule;
-import com.zfoo.util.net.HostAndPort;
+import com.zfoo.net.config.model.ProviderModule;
+import com.zfoo.net.consumer.registry.Register;
+import com.zfoo.net.core.HostAndPort;
 import io.netty.util.NetUtil;
 import org.junit.Assert;
 import org.junit.Test;
@@ -25,83 +26,59 @@ import org.junit.Test;
 import java.util.List;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public class RegistryTest {
 
-
     @Test
     public void registerVoTest() {
-        var modules = List.of(new ProtocolModule((byte) 100, "aaa", "1.0.0")
-                , new ProtocolModule((byte) 120, "bbb", "1.0.0"));
-        var providerConfig = ProviderConfig.valueOf(HostAndPort.valueOf("127.0.0.1", 80).toHostAndPortStr(), modules);
-        var consumerConfig = ConsumerConfig.valueOf(modules);
+        // 定义2个模块：可以为服务提供者用，也可以为服务消费者用，这个仅仅是模块信息
+        var protocolModule1 = "aaa";
+        var protocolModule2 ="bbb";
 
-        var vo = RegisterVO.valueOf("test", providerConfig, consumerConfig);
-        var voStr = vo.toString();
+        // 服务提供者模块列表和服务提供者配置
+        // 定义2个服务提供者模块
+        var providerModules = List.of(new ProviderModule(protocolModule1, "a"), new ProviderModule(protocolModule2, "b"));
+        // 服务器提供者配置：服务提供者的ip + 服务提供者模块
+        var providerConfig = ProviderConfig.valueOf(HostAndPort.valueOf("127.0.0.1", 80).toHostAndPortStr(), providerModules);
+
+        // 服务消费者模块和服务消费者配置(服务消费者模块多一个负载均衡属性)
+        var consumerModules = List.of(new ConsumerModule("random", "a"), new ConsumerModule("random", "b"));
+        // 服务消费者配置：这个是没Ip的
+        var consumerConfig = ConsumerConfig.valueOf(consumerModules);
+
+        var register = Register.valueOf("test", providerConfig, consumerConfig);
+        var voStr = register.toString();
+
+        // test | 127.0.0.1:80 | provider:[100-aaa-a, 120-bbb-b] | consumer:[100-aaa-random-a, 120-bbb-random-b]
         System.out.println(voStr);
-        var newVo = RegisterVO.parseString(voStr);
-        Assert.assertEquals(vo, newVo);
 
+        var newRegister = Register.parseString(voStr);
+        Assert.assertEquals(register, newRegister);
+
+        // /127.0.0.1
         System.out.println(NetUtil.LOCALHOST);
+
+        // localhost/127.0.0.1
         System.out.println(NetUtil.LOCALHOST4);
+
+        //localhost/0:0:0:0:0:0:0:1
         System.out.println(NetUtil.LOCALHOST6);
+
+        // 200
         System.out.println(NetUtil.SOMAXCONN);
+
+        // name:lo (Software Loopback Interface 1)
         System.out.println(NetUtil.LOOPBACK_IF);
     }
 
-    @Test
-    public void moduleTest() {
-        var moduleId = (byte) 1;
-        var str = "1.0.0";
-        var module = new ProtocolModule(moduleId, "", str);
-
-        str = "0.0.0";
-        module = new ProtocolModule(moduleId, "", str);
-
-        str = "10.0.0";
-        module = new ProtocolModule(moduleId, "", str);
-
-        str = "10.11.10";
-        module = new ProtocolModule(moduleId, "", str);
-
-        str = "10.11.101";
-        module = new ProtocolModule(moduleId, "", str);
-
-        str = "99.99.999";
-        module = new ProtocolModule(moduleId, "", str);
-
-        module = null;
-
-        str = "1.00.001";
-        try {
-            module = new ProtocolModule(moduleId, "", str);
-        } catch (Exception e) {
-        }
-        Assert.assertNull(module);
-
-        str = "1.00.111";
-        try {
-            module = new ProtocolModule(moduleId, "", str);
-        } catch (Exception e) {
-        }
-        Assert.assertNull(module);
-
-        str = "1.001.0";
-        try {
-            module = new ProtocolModule(moduleId, "", str);
-        } catch (Exception e) {
-        }
-        Assert.assertNull(module);
-
-        str = "99.999.999";
-        try {
-            module = new ProtocolModule(moduleId, "", str);
-        } catch (Exception e) {
-        }
-        Assert.assertNotNull(module);
-
-    }
-
 }
+
+/*
+test | 127.0.0.1:80 | provider:[100-aaa-a, 120-bbb-b] | consumer:[100-aaa-random-a, 120-bbb-random-b]
+/127.0.0.1
+localhost/127.0.0.1
+localhost/0:0:0:0:0:0:0:1
+200
+name:lo (Software Loopback Interface 1)
+ */

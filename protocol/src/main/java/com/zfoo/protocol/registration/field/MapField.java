@@ -19,8 +19,7 @@ import com.zfoo.protocol.serializer.reflect.MapSerializer;
 import java.lang.reflect.Type;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public class MapField implements IFieldRegistration {
 

@@ -13,20 +13,13 @@
 
 package com.zfoo.net.packet;
 
-import com.zfoo.protocol.IPacket;
+import com.zfoo.protocol.anno.Protocol;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
-public class SM_Object implements IPacket {
+@Protocol(id = 1115)
+public class SM_Object {
 
-    public static final transient short PROTOCOL_ID = 1115;
-
-
-    @Override
-    public short protocolId() {
-        return PROTOCOL_ID;
-    }
 }
 

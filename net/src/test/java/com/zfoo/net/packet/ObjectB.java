@@ -13,24 +13,17 @@
 
 package com.zfoo.net.packet;
 
-import com.zfoo.protocol.IPacket;
+import com.zfoo.protocol.anno.Protocol;
 
 import java.util.Objects;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
-public class ObjectB implements IPacket {
-
-    public static final transient short PROTOCOL_ID = 1117;
+@Protocol(id = 1117)
+public class ObjectB {
 
     private boolean flag;
-
-    @Override
-    public short protocolId() {
-        return PROTOCOL_ID;
-    }
 
     public boolean isFlag() {
         return flag;

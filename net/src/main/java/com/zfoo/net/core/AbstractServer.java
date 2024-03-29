@@ -14,7 +14,7 @@
 package com.zfoo.net.core;
 
 import com.zfoo.protocol.util.IOUtils;
-import com.zfoo.util.net.HostAndPort;
+import com.zfoo.protocol.util.ThreadUtils;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.epoll.Epoll;
@@ -23,7 +23,6 @@ import io.netty.channel.epoll.EpollServerSocketChannel;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.util.concurrent.DefaultThreadFactory;
-import io.netty.util.concurrent.EventExecutorGroup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,14 +30,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
-public abstract class AbstractServer implements IServer {
+public abstract class AbstractServer<C extends Channel> extends ChannelInitializer<C> implements IServer {
     private static final Logger logger = LoggerFactory.getLogger(AbstractServer.class);
 
     // 所有的服务器都可以在这个列表中取到
-    protected static final List<AbstractServer> allServers = new ArrayList<>(1);
+    protected static final List<AbstractServer<? extends Channel>> allServers = new ArrayList<>(1);
 
     protected String hostAddress;
     protected int port;
@@ -52,25 +50,22 @@ public abstract class AbstractServer implements IServer {
 
     protected ChannelFuture channelFuture;
 
-    protected Channel channel;
-
     public AbstractServer(HostAndPort host) {
         this.hostAddress = host.getHost();
         this.port = host.getPort();
     }
 
-    public abstract ChannelInitializer<? extends Channel> channelChannelInitializer();
-
     @Override
     public void start() {
-        doStart(channelChannelInitializer());
+        doStart();
     }
 
-    protected synchronized void doStart(ChannelInitializer<? extends Channel> channelChannelInitializer) {
+    protected synchronized void doStart() {
         var cpuNum = Runtime.getRuntime().availableProcessors();
+        // 一条线程持有一个端口对应的selector，如果我们启动不仅仅是一个服务器端口的话，为了更好的性能需要修改对应的bossGroup数量
         bossGroup = Epoll.isAvailable()
-                ? new EpollEventLoopGroup(Math.max(1, cpuNum / 4), new DefaultThreadFactory("netty-boss", true))
-                : new NioEventLoopGroup(Math.max(1, cpuNum / 4), new DefaultThreadFactory("netty-boss", true));
+                ? new EpollEventLoopGroup(Math.max(1, cpuNum / 8), new DefaultThreadFactory("netty-boss", true))
+                : new NioEventLoopGroup(Math.max(1, cpuNum / 8), new DefaultThreadFactory("netty-boss", true));
 
         workerGroup = Epoll.isAvailable()
                 ? new EpollEventLoopGroup(cpuNum * 2, new DefaultThreadFactory("netty-worker", true))
@@ -82,7 +77,7 @@ public abstract class AbstractServer implements IServer {
                 .option(ChannelOption.SO_REUSEADDR, true)
                 .childOption(ChannelOption.TCP_NODELAY, true)
                 .childOption(ChannelOption.WRITE_BUFFER_WATER_MARK, new WriteBufferWaterMark(16 * IOUtils.BYTES_PER_KB, 16 * IOUtils.BYTES_PER_MB))
-                .childHandler(channelChannelInitializer);
+                .childHandler(this);
         // 绑定端口，同步等待成功
         // channelFuture = bootstrap.bind(hostAddress, port).sync();
         // 等待服务端监听端口关闭
@@ -92,7 +87,6 @@ public abstract class AbstractServer implements IServer {
         // 异步
         channelFuture = bootstrap.bind(hostAddress, port);
         channelFuture.syncUninterruptibly();
-        channel = channelFuture.channel();
 
         allServers.add(this);
 
@@ -102,9 +96,8 @@ public abstract class AbstractServer implements IServer {
 
     @Override
     public synchronized void shutdown() {
-        shutdownEventLoopGracefully(bossGroup);
-
-        shutdownEventLoopGracefully(workerGroup);
+        ThreadUtils.shutdownEventLoopGracefully("netty-boss", bossGroup);
+        ThreadUtils.shutdownEventLoopGracefully("netty-worker", workerGroup);
 
         if (channelFuture != null) {
             try {
@@ -113,29 +106,6 @@ public abstract class AbstractServer implements IServer {
                 logger.warn(e.getMessage(), e);
             }
         }
-
-        if (channel != null) {
-            try {
-                channel.close();
-            } catch (Exception e) {
-                logger.warn(e.getMessage(), e);
-            }
-        }
-    }
-
-    public synchronized static void shutdownEventLoopGracefully(EventExecutorGroup executor) {
-        if (executor == null) {
-            return;
-        }
-        try {
-            if (executor.isShutdown() || executor.isTerminated()) {
-                executor.shutdownGracefully();
-            }
-        } catch (Exception e) {
-            logger.error("EventLoop Thread pool [{}] is failed to shutdown! ", executor, e);
-            return;
-        }
-        logger.info("EventLoop Thread pool [{}] shuts down gracefully.", executor);
     }
 
     public synchronized static void shutdownAllServers() {

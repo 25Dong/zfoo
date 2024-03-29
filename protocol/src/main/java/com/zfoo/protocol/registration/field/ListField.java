@@ -19,8 +19,7 @@ import com.zfoo.protocol.serializer.reflect.ListSerializer;
 import java.lang.reflect.Type;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public class ListField implements IFieldRegistration {
 

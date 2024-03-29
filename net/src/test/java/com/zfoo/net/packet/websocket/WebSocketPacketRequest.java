@@ -13,19 +13,17 @@
 
 package com.zfoo.net.packet.websocket;
 
-import com.zfoo.protocol.IPacket;
+import com.zfoo.protocol.anno.Protocol;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
-public class WebSocketPacketRequest implements IPacket {
-
-    public static final transient short PROTOCOL_ID = 2070;
+@Protocol(id = 2070)
+public class WebSocketPacketRequest {
 
     private byte a;
     private Byte aa;
@@ -55,9 +53,6 @@ public class WebSocketPacketRequest implements IPacket {
     private double[] fff;
     private Double[] ffff;
 
-    private char g;
-    private char[] gg;
-    private List<Character> ggg;
 
     private String jj;
     private String[] jjj;
@@ -81,11 +76,6 @@ public class WebSocketPacketRequest implements IPacket {
     private Set<Set<WebSocketObjectA>> sss;
     private Set<String> ssss;
     private Set<Map<Integer, String>> sssss;
-
-    @Override
-    public short protocolId() {
-        return PROTOCOL_ID;
-    }
 
     public byte getA() {
         return a;
@@ -261,30 +251,6 @@ public class WebSocketPacketRequest implements IPacket {
 
     public void setFfff(Double[] ffff) {
         this.ffff = ffff;
-    }
-
-    public char getG() {
-        return g;
-    }
-
-    public void setG(char g) {
-        this.g = g;
-    }
-
-    public char[] getGg() {
-        return gg;
-    }
-
-    public void setGg(char[] gg) {
-        this.gg = gg;
-    }
-
-    public List<Character> getGgg() {
-        return ggg;
-    }
-
-    public void setGgg(List<Character> ggg) {
-        this.ggg = ggg;
     }
 
     public String getJj() {

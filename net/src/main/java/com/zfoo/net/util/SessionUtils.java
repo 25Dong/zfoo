@@ -13,8 +13,7 @@
 
 package com.zfoo.net.util;
 
-import com.zfoo.net.session.model.AttributeType;
-import com.zfoo.net.session.model.Session;
+import com.zfoo.net.session.Session;
 import com.zfoo.protocol.util.StringUtils;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
@@ -22,13 +21,15 @@ import io.netty.channel.ChannelHandlerContext;
 import static com.zfoo.net.handler.BaseRouteHandler.SESSION_KEY;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public abstract class SessionUtils {
 
     private static final String CHANNEL_INFO_TEMPLATE = "[ip:{}][sid:{}][uid:{}]";
 
+    private static final String CHANNEL_SIMPLE_INFO_TEMPLATE = "[sid:{}][uid:{}]";
+
+    private static final String CHANNEL_TEMPLATE = "[channel:{}]";
 
     public static boolean isActive(Session session) {
         return session != null && session.getChannel().isActive();
@@ -46,7 +47,7 @@ public abstract class SessionUtils {
     public static String sessionInfo(ChannelHandlerContext ctx) {
         var session = SessionUtils.getSession(ctx);
         if (session == null) {
-            return StringUtils.format(CHANNEL_INFO_TEMPLATE, ctx.channel());
+            return StringUtils.format(CHANNEL_TEMPLATE, ctx.channel());
         }
         return sessionInfo(session);
     }
@@ -55,8 +56,30 @@ public abstract class SessionUtils {
         if (session == null) {
             return CHANNEL_INFO_TEMPLATE;
         }
-        var remoteAddress = session.getAttribute(AttributeType.CHANNEL_REMOTE_ADDRESS);
-        return StringUtils.format(CHANNEL_INFO_TEMPLATE, remoteAddress, session.getSid(), session.getAttribute(AttributeType.UID));
+        var remoteAddress = StringUtils.EMPTY;
+        try {
+            remoteAddress = StringUtils.substringAfterFirst(session.getChannel().remoteAddress().toString(), StringUtils.SLASH);
+        } catch (Throwable t) {
+            // do nothing
+            // to avoid: io.netty.channel.unix.Errors$NativeIoException: readAddress(..) failed: Connection reset by peer
+            // 有些情况当建立连接过后迅速关闭，这个时候取remoteAddress会有异常
+        }
+        return StringUtils.format(CHANNEL_INFO_TEMPLATE, remoteAddress, session.getSid(), session.getUid());
+    }
+
+    public static String sessionSimpleInfo(ChannelHandlerContext ctx) {
+        var session = SessionUtils.getSession(ctx);
+        if (session == null) {
+            return StringUtils.format(CHANNEL_TEMPLATE, ctx.channel());
+        }
+        return sessionSimpleInfo(session);
+    }
+
+    public static String sessionSimpleInfo(Session session) {
+        if (session == null) {
+            return CHANNEL_SIMPLE_INFO_TEMPLATE;
+        }
+        return StringUtils.format(CHANNEL_SIMPLE_INFO_TEMPLATE, session.getSid(), session.getUid());
     }
 
 }

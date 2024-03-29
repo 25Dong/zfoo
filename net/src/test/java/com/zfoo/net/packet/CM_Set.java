@@ -13,7 +13,7 @@
 
 package com.zfoo.net.packet;
 
-import com.zfoo.protocol.IPacket;
+import com.zfoo.protocol.anno.Protocol;
 
 import java.util.List;
 import java.util.Map;
@@ -21,12 +21,10 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
-public class CM_Set implements IPacket {
-
-    public static final transient short PROTOCOL_ID = 1121;
+@Protocol(id = 1121, enhance = false)
+public class CM_Set {
 
     private Set<Integer> a;
     private Set<ObjectA> b;
@@ -35,11 +33,6 @@ public class CM_Set implements IPacket {
     private Set<Set<Set<ObjectA>>> setSetSetWithObject;
     private Set<Map<Integer, String>> setWithMap;
     private Set<List<Map<Integer, ObjectA>>> setListWithMap;
-
-    @Override
-    public short protocolId() {
-        return PROTOCOL_ID;
-    }
 
     public Set<Integer> getA() {
         return a;

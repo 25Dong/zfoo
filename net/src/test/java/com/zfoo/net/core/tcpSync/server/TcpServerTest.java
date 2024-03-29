@@ -13,16 +13,15 @@
 
 package com.zfoo.net.core.tcpSync.server;
 
+import com.zfoo.net.core.HostAndPort;
 import com.zfoo.net.core.tcp.TcpServer;
-import com.zfoo.util.ThreadUtils;
-import com.zfoo.util.net.HostAndPort;
+import com.zfoo.protocol.util.ThreadUtils;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 @Ignore
 public class TcpServerTest {

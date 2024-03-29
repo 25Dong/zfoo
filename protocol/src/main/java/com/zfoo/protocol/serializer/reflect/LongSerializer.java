@@ -18,8 +18,7 @@ import com.zfoo.protocol.registration.field.IFieldRegistration;
 import io.netty.buffer.ByteBuf;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public class LongSerializer implements ISerializer {
 
@@ -33,5 +32,15 @@ public class LongSerializer implements ISerializer {
     @Override
     public Object readObject(ByteBuf buffer, IFieldRegistration fieldRegistration) {
         return ByteBufUtils.readLongBox(buffer);
+    }
+
+    @Override
+    public Object defaultValue(IFieldRegistration fieldRegistration) {
+        return Long.valueOf(0);
+    }
+
+    @Override
+    public int predictionLength(IFieldRegistration fieldRegistration) {
+        return 5;
     }
 }

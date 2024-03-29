@@ -20,8 +20,7 @@ import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.ss.usermodel.FormulaError;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public abstract class CellUtils {
 

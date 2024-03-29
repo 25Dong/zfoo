@@ -17,12 +17,11 @@ import com.zfoo.protocol.util.StringUtils;
 /**
  * 多叉树
  *
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public class GeneralTree<T> {
 
-    private TreeNode<T> rootNode = new TreeNode<>(null, null);
+    private final TreeNode<T> rootNode = new TreeNode<>(null, null);
 
     public TreeNode<T> getRootNode() {
         return rootNode;

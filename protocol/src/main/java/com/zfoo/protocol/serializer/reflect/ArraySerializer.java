@@ -21,8 +21,7 @@ import io.netty.buffer.ByteBuf;
 import java.lang.reflect.Array;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public class ArraySerializer implements ISerializer {
 
@@ -67,6 +66,19 @@ public class ArraySerializer implements ISerializer {
         }
 
         return array;
+    }
+
+    @Override
+    public Object defaultValue(IFieldRegistration fieldRegistration) {
+        ArrayField arrayField = (ArrayField) fieldRegistration;
+        return Array.newInstance(arrayField.getType(), 0);
+    }
+
+    @Override
+    public int predictionLength(IFieldRegistration fieldRegistration) {
+        ArrayField arrayField = (ArrayField) fieldRegistration;
+        var length = arrayField.getArrayElementRegistration().serializer().predictionLength(arrayField.getArrayElementRegistration());
+        return 7 * length;
     }
 
 }

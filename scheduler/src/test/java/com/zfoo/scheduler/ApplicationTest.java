@@ -13,8 +13,7 @@
 
 package com.zfoo.scheduler;
 
-import com.zfoo.util.ThreadUtils;
-import org.junit.Ignore;
+import com.zfoo.protocol.util.ThreadUtils;
 import org.junit.Test;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
@@ -22,11 +21,9 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
  * cron（译为克龙）代表100万年，是英文单词中最大的时间单位。
  * google（译为古戈尔）代表10的100次方，足够穷尽宇宙万物
  *
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 
-@Ignore
 public class ApplicationTest {
 
     @Test
@@ -34,7 +31,7 @@ public class ApplicationTest {
         // 加载配置文件，配置文件中必须引入scheduler
         var context = new ClassPathXmlApplicationContext("application.xml");
 
-        ThreadUtils.sleep(Long.MAX_VALUE);
+        ThreadUtils.sleep(10000);
     }
 
 }

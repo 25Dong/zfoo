@@ -16,16 +16,15 @@ import com.zfoo.net.NetContext;
 import com.zfoo.net.packet.udp.UdpHelloRequest;
 import com.zfoo.net.packet.udp.UdpHelloResponse;
 import com.zfoo.net.router.attachment.UdpAttachment;
-import com.zfoo.net.router.receiver.PacketReceiver;
-import com.zfoo.net.session.model.Session;
+import com.zfoo.net.anno.PacketReceiver;
+import com.zfoo.net.session.Session;
 import com.zfoo.protocol.util.JsonUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 @Component
 public class UdpServerPacketController {

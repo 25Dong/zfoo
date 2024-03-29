@@ -5,8 +5,7 @@ import com.zfoo.hotswap.model.ClassFileDef;
 import java.util.Map;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public interface IHotSwapManager {
 

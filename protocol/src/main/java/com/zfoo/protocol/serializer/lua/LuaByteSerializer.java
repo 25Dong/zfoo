@@ -23,10 +23,14 @@ import static com.zfoo.protocol.util.FileUtils.LS;
 
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public class LuaByteSerializer implements ILuaSerializer {
+
+    @Override
+    public String fieldDefaultValue(Field field, IFieldRegistration fieldRegistration) {
+        return "0";
+    }
 
     @Override
     public void writeObject(StringBuilder builder, String objectStr, int deep, Field field, IFieldRegistration fieldRegistration) {

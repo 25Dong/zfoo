@@ -13,6 +13,7 @@
 package com.zfoo.protocol;
 
 import com.zfoo.protocol.buffer.ByteBufUtils;
+import com.zfoo.protocol.collection.HashMapIntShort;
 import com.zfoo.protocol.generate.GenerateOperation;
 import com.zfoo.protocol.registration.IProtocolRegistration;
 import com.zfoo.protocol.registration.ProtocolAnalysis;
@@ -21,85 +22,125 @@ import com.zfoo.protocol.util.AssertionUtils;
 import com.zfoo.protocol.xml.XmlProtocols;
 import io.netty.buffer.ByteBuf;
 
-import java.lang.reflect.Field;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public class ProtocolManager {
 
-    public static final String PROTOCOL_ID = "PROTOCOL_ID";
     public static final short MAX_PROTOCOL_NUM = Short.MAX_VALUE;
     public static final byte MAX_MODULE_NUM = Byte.MAX_VALUE;
-    public static final Comparator<Field> PACKET_FIELD_COMPARATOR = (a, b) -> a.getName().compareTo(b.getName());
 
+    /**
+     * The protocol corresponding to the protocolId.(协议号protocolId对应的协议，数组下标是协议号protocolId)
+     */
     public static final IProtocolRegistration[] protocols = new IProtocolRegistration[MAX_PROTOCOL_NUM];
+    /**
+     * The modules of the protocol.(协议的模块)
+     */
     public static final ProtocolModule[] modules = new ProtocolModule[MAX_MODULE_NUM];
 
+    /**
+     * key:packet class，value:protocolId.(如果所有协议Class返回的hashcode都不相同（大概率事件），则使用高性能的HashMapIntShort)
+     */
+    public static Map<Class<?>, Short> protocolIdMap = new HashMap<>();
+    public static HashMapIntShort protocolIdPrimitiveMap = new HashMapIntShort();
+
     static {
-        // 初始化默认协议模块
+        // default protocol module
         modules[0] = ProtocolModule.DEFAULT_PROTOCOL_MODULE;
     }
 
     /**
-     * 将packet序列化到buffer中
+     * serialize the packet into the buffer
      */
-    public static void write(ByteBuf buffer, IPacket packet) {
-        var protocolId = packet.protocolId();
-        // 写入协议号
+    public static void write(ByteBuf buffer, Object packet) {
+        var protocolId = protocolId(packet.getClass());
+        // write the protocolId
         ByteBufUtils.writeShort(buffer, protocolId);
-        // 写入包体
+        // write the package
         protocols[protocolId].write(buffer, packet);
     }
 
-    public static IPacket read(ByteBuf buffer) {
-        short id = ByteBufUtils.readShort(buffer);
-        IProtocolRegistration protocol = protocols[id];
-        return (IPacket) protocol.read(buffer);
+    /**
+     * deserialization a packet from the buffer
+     * <p>
+     * byte[] convert to ByteBuf using Unpooled.wrappedBuffer(byte[]) in netty
+     * ByteBuf convert to byte[] using ByteBufUtils.readAllBytes(ByteBuf) in zfoo
+     */
+    public static Object read(ByteBuf buffer) {
+        return protocols[ByteBufUtils.readShort(buffer)].read(buffer);
     }
 
     public static IProtocolRegistration getProtocol(short protocolId) {
-        var protocol = protocols[protocolId];
-        AssertionUtils.notNull(protocol, "[protocolId:{}]协议不存在，可能没有注册该协议或者协议号错误", protocolId);
-        return protocol;
+        return protocols[protocolId];
+    }
+
+    public static IProtocolRegistration getProtocol(Class<?> protocolClass) {
+        return getProtocol(protocolId(protocolClass));
     }
 
     public static ProtocolModule moduleByProtocolId(short id) {
         return modules[protocols[id].module()];
     }
 
+    public static ProtocolModule moduleByProtocol(Class<?> clazz) {
+        return moduleByProtocolId(protocolId(clazz));
+    }
+
+    /**
+     * Find the module based on the module ID
+     */
     public static ProtocolModule moduleByModuleId(byte moduleId) {
         var module = modules[moduleId];
         AssertionUtils.notNull(module, "[moduleId:{}]不存在", moduleId);
         return module;
     }
 
+    /**
+     * Find modules by module name
+     */
     public static ProtocolModule moduleByModuleName(String name) {
         var moduleOptional = Arrays.stream(modules)
-                .filter(it -> Objects.nonNull(it))
+                .filter(Objects::nonNull)
                 .filter(it -> it.getName().equals(name))
                 .findFirst();
-        if (moduleOptional.isEmpty()) {
-            return null;
-        }
-        return moduleOptional.get();
+        return moduleOptional.orElse(null);
+    }
+
+    public static short protocolId(Class<?> clazz) {
+        return protocolIdMap == null ? protocolIdPrimitiveMap.getPrimitive(clazz.hashCode()) : protocolIdMap.get(clazz);
+    }
+
+    public static boolean isProtocolClass(Class<?> clazz) {
+        return protocolIdMap == null ? protocolIdPrimitiveMap.containsKey(clazz.hashCode()) : protocolIdMap.containsKey(clazz);
     }
 
     public static void initProtocol(Set<Class<?>> protocolClassSet) {
         ProtocolAnalysis.analyze(protocolClassSet, GenerateOperation.NO_OPERATION);
     }
 
+    /**
+     * Register protocol
+     *
+     * @param protocolClassSet  A list of protocols that need to be initialized
+     * @param generateOperation Protocol configuration(需要生成哪些语言的协议文件 是否折叠等信息)
+     */
     public static void initProtocol(Set<Class<?>> protocolClassSet, GenerateOperation generateOperation) {
         ProtocolAnalysis.analyze(protocolClassSet, generateOperation);
     }
 
     public static void initProtocol(XmlProtocols xmlProtocols, GenerateOperation generateOperation) {
-        ProtocolAnalysis.analyze(xmlProtocols,  generateOperation);
+        ProtocolAnalysis.analyze(xmlProtocols, generateOperation);
+    }
+
+    /**
+     * EN:Register protocol and automatically generates a protocol ID if the subprotocol does not specify a protocol ID
+     * CN:子协议会自动注册协议号protocolId，如果子协议没有指定protocolId则自动生成protocolId
+     */
+    public static void initProtocolAuto(List<Class<?>> protocolClassList, GenerateOperation generateOperation) {
+        ProtocolAnalysis.analyzeAuto(protocolClassList, generateOperation);
     }
 
 }

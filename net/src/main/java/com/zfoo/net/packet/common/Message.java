@@ -13,23 +13,18 @@
 
 package com.zfoo.net.packet.common;
 
-import com.zfoo.protocol.IPacket;
-import com.zfoo.protocol.ProtocolManager;
+import com.zfoo.protocol.anno.Protocol;
+import com.zfoo.protocol.util.StringUtils;
 
 /**
- * 通用的返回，既可以用在远程调用，又可以嵌套在其它协议里
  *
- * @author jaysunxiao
- * @version 3.0
+ * EN: Generic returns can be used both remotely and nested in other protocols
+ * CN: 通用的返回，既可以用在远程调用，又可以嵌套在其它协议里
+ *
+ * @author godotg
  */
-public class Message implements IPacket {
-
-    public static final transient short PROTOCOL_ID = 100;
-
-    public static final Message SUCCESS = valueSuccess(null);
-    public static final Message FAIL = valueFail(null);
-
-    private byte module;
+@Protocol(id = 100)
+public class Message {
 
     /**
      * 1是成功，其它的均视为失败的请求
@@ -37,6 +32,11 @@ public class Message implements IPacket {
     private int code;
 
     private String message;
+
+    @Override
+    public String toString() {
+        return StringUtils.format("code:[{}] message:[{}]", code, message);
+    }
 
     public boolean success() {
         return code == 1;
@@ -46,19 +46,8 @@ public class Message implements IPacket {
         return code == 0;
     }
 
-    public static Message valueOf(IPacket packet, int code, String message) {
-        var mess = new Message();
-        mess.module = ProtocolManager.moduleByProtocolId(packet.protocolId()).getId();
-        mess.code = code;
-        mess.message = message;
-        return mess;
-    }
 
-    public static Message valueOf(IPacket packet, int code) {
-        return Message.valueOf(packet, code, null);
-    }
-
-    public static Message valueFail(String message) {
+    public static Message valueError(String message) {
         var mess = new Message();
         mess.code = 0;
         mess.message = message;
@@ -72,18 +61,13 @@ public class Message implements IPacket {
         return mess;
     }
 
-    @Override
-    public short protocolId() {
-        return PROTOCOL_ID;
+    public static Message valueInfo(String message) {
+        var mess = new Message();
+        mess.code = 2;
+        mess.message = message;
+        return mess;
     }
 
-    public byte getModule() {
-        return module;
-    }
-
-    public void setModule(byte module) {
-        this.module = module;
-    }
 
     public int getCode() {
         return code;

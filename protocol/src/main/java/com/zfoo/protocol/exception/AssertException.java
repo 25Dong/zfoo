@@ -15,8 +15,7 @@ package com.zfoo.protocol.exception;
 import com.zfoo.protocol.util.StringUtils;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public class AssertException extends RuntimeException {
 

@@ -10,7 +10,6 @@
  * See the License for the specific language governing permissions and limitations under the License.
  *
  */
-
 package com.zfoo.protocol.util;
 
 import com.zfoo.protocol.model.Triple;
@@ -21,15 +20,12 @@ import org.junit.Test;
 import java.util.*;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
-
-
 public class JsonUtilTest {
 
     public static String id = "\"id\":\"1000\"";
-    public static String name = "\"name\":\"jaysunxiao\"";
+    public static String name = "\"name\":\"godotg\"";
     public static String sex = "\"sex\":\"man\"";
     public static String age = "\"age\":22";
     public static String list = "\"list\":[1,2,3]";
@@ -42,7 +38,7 @@ public class JsonUtilTest {
     public void string2Object() {
         User user = JsonUtils.string2Object(userJson, User.class);
         Assert.assertEquals(user.getId(), "1000");
-        Assert.assertEquals(user.getName(), "jaysunxiao");
+        Assert.assertEquals(user.getName(), "godotg");
         Assert.assertEquals(user.getSex(), "man");
         Assert.assertEquals(user.getList().size(), 3);
         Assert.assertEquals(user.getMap().size(), 3);
@@ -52,7 +48,7 @@ public class JsonUtilTest {
     public void object2String() {
         User user = new User();
         user.setId("1000");
-        user.setName("jaysunxiao");
+        user.setName("godotg");
         user.setSex("man");
         user.setAge(22);
         //数组，链表，list
@@ -113,6 +109,12 @@ public class JsonUtilTest {
         var triple = new Triple<String, String, String>("a", "b", "c");
         var tripleStr = JsonUtils.object2String(triple);
         var temp = JsonUtils.string2Object(tripleStr, Triple.class);
+    }
+
+    @Test
+    public void prettyPrinterTest() {
+        var user = JsonUtils.string2Object(userJson, User.class);
+        System.out.println(JsonUtils.object2StringPrettyPrinter(user));
     }
 }
 

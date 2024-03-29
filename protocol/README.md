@@ -1,110 +1,257 @@
-### Ⅰ. 简介
+English | [简体中文](./README_CN.md)
 
-- [zfoo protocol](https://github.com/zfoo-project/zfoo/blob/main/protocol/README.md)
-  是目前的Java二进制序列化和反序列化最快的框架，并且为序列化后字节最少的框架
-- 协议目前原生支持Java Javascript C# Lua GDScript，协议理论上可以跨平台
-- 使用Javassist字节码增强动态生成顺序执行的序列化和反序列化函数，顺序执行的函数可以轻易的被JIT编译以达到极致的性能
-- 兼容protobuf，支持生成protobuf协议文件，提供从pojo到proto的生成方式
+### Ⅰ. Introduction
 
-### Ⅱ. 快速使用
+- A decentralized serialization library, secure, private, reliable, and compatible, allowing everyone to have a unique
+  set of protocols
+- The protocol is currently natively supported **C++ Java Javascript TypeScript C# Go Lua GDScript Python**，It's easy to
+  do cross-platform
+- The protocol can customize the private protocol format to make your protocol more secure, and supports adding fields
+  and being compatible with previous and subsequent protocols
+- Support to generate ProtoBuf's Proto file to Pojo protocol file, and the generated protocol can be converted to other
+  protocols and used by Java
 
-- 环境要求 **JDK 11+**，可以在 **OpenJDK** 和 **Oracle JDK** 无缝切换
+### Ⅱ. Quick use
+
+- Environment requirement **JDK 17+**, support **OpenJDK**, **Oracle JDK** and **native GraalVM**
 
 ```
-// zfoo协议注册，只能初始化一次
+// The zfoo protocol is registered and can only be initialized once
 ProtocolManager.initProtocol(Set.of(ComplexObject.class, ObjectA.class, ObjectB.class));
 
-// 序列化
+// serialization
 ProtocolManager.write(byteBuf, complexObject);
 
-// 反序列化
+// deserialization
 var packet = ProtocolManager.read(buffer);
 ```
 
-### Ⅲ. 性能测试
+### Ⅲ. Performance testing
 
-- 单线程环境，在没有任何JVM参数调优的情况下速度比Protobuf快20%，比Kryo快40%，[参见性能测试](src/test/java/com/zfoo/protocol/SpeedTest.java)
-- 线程安全，zfoo和Protobuf的性能不受任何影响，kryo因为线程不安全性能会有所损失，[参见性能测试](src/test/java/com/zfoo/protocol/SpeedTest.java)
+- [Benchmark Test](src/test/java/com/zfoo/protocol/BenchmarkTesting.java)
 
-
-- 测试环境
+- Test the environment
 
 ```
-操作系统：win10
+system：win10
 cpu： i9900k
-内存：64g
+memory：64g
 ```
 
-- 单线程测试，横坐标为序列化和反序列化的对象数量，纵坐标为花费的时间（单位毫秒）
+- Single-threaded test with abscissa as the number of objects serialized and deserialized and time spent in milliseconds
+  on the ordinate
   ![Image text](../doc/image/protocol/simple_object.png)
   ![Image text](../doc/image/protocol/normal_object.png)
   ![Image text](../doc/image/protocol/complex_object.png)
 
-### Ⅳ. 为什么快
+### Ⅳ. Why fast
 
-- 轻量级实现，核心序列化和反序列化代码一千行左右
-- 没有装箱和拆箱，避免了无效GC
-- 天生线程安全并且无锁化；kryo强制要求每条线程都有自己的一个Kryo实例，这是一个比较重的设计，特别是线程比较多的场景
-- 没有反射，没有unsafe操作；对比kryo中使用objenesis导致大量unsafe，而且在Java11中运行会出现警告
-- 优化了int和long的zigzag和varint编码的算法，避免了一些多余的方法调用和位操作
-- 扁平化了方法栈的调用深度，数据结构嵌套没有任何性能损失，如List<Set<Map<>>>；对比kryo和protobuf数据结构嵌套会出现性能损失
-- 使用Javassist字节码增强动态生成顺序执行的序列化和反序列化函数，顺序化的函数可以轻易的被JIT编译以达到极致的性能
-- 其它优点
-
-```
-无漏洞注入风险，只有初始化时会进行字节码增强，后期不会再进行任何字节码的操作
-数据压缩体积小，压缩体积比kryo和protobuf都要小；比kryo小是因为kryo需要写入每个对象的注册号
-跨平台可以轻易实现，目前已经原生支持Java，Javascript，C#，Lua，目前kryo无法跨平台，protobuf可以跨平台
-智能语法分析，错误的协议定义将无法启动程序并给出错误警告
-提升开发效率，完全支持POJO方式开发，使用非常简单
-```
-
-### Ⅴ. 待解决的问题
-
-- 为了代码的优雅，zfoo protocol要求全部的协议类都要继承IPacket，但是可以保证不损失性能的情况下支持不继承IPacket的设计，这个有待继续讨论。
-- 协议类修改
-  - 修改字段名称过后无法解析，内部使用字段的名称按照字符串的自然顺序来依次读写的，所以修改名称会导致读写顺序变化导致出现异常
-  - 减少字段无法解析，没必要一定要删除一个不需要的字段，所以不考虑这种情况
-  - 增加字段无法解析，可以考虑通过版本号去控制，或者增加新的协议类去解决（组合大于继承，协议类应该对扩展开放，对修改关闭）
+- Use Javassist bytecode to enhance the dynamic generation of serialization and deserialization functions for sequential
+  execution, and sequential functions can be easily JIT compiled to achieve extreme performance
+- Natively integrated with netty's high-performance ByteBuf, support Zero Copy
+- With primitive type collection, there is no boxing and unboxing, invalid GCs are avoided, and the performance is fast
+  enough
+- thread-safe and lock-free, without any performance loss in multi-threaded environment
+- No reflection, no unsafe operations, support GraalVM
+- Flattening the call depth of the method stack, and there is no performance penalty for nesting data structures, such
+  as List<Set<Map<>>>; Comparing kryo and protobuf data structure nesting results in a performance penalty
+- There is no risk of vulnerability injection, only bytecode enhancement will be performed during initialization, and no
+  bytecode operations will be performed in the later stage
+- Taking advantage of the principle of program locality, the serializer is placed in the short[] array, and the object
+  serialization and deserialization will only look for the serializer once
 
 ```
-设计模式六大原则中的开闭原则是对扩展开放，对修改关闭。协议的设计涉及到功能应该也要遵守这个原则。
-
-目前的序列化过后对象的大小如下：
-简单对象，zfoo包体大小8，kryo包体大小5，protobuf包体大小8
-常规对象，zfoo包体大小547，kryo包体大小594，protobuf包体大小984
-复杂对象，zfoo包体大小2214，kryo包体大小2525，protobuf包体大小5091
-
-如果考虑支持修改协议类字段名称，必须让字段的读写顺序可控，这就需要注解来标识字段的顺序（protostuff就是这样做的），但是感觉这样不优雅。
-如果考虑支持字段增加和减少，需要消耗5%左右的性能（预估），并且增加一倍的包体积大小（写入字段的顺序），感觉不是非常划算。
-因为可以通过协议版本号来解决这个问题，所以去支持这样的增删操作动力并不是非常的大。
-
-对于服务器来说协议一般有对内和对外的协议，对外protobuf用起来还行，但是服务器的内部调用protobuf用的就少了，用zfoo就可以统一对内和对外的协议。
+The data compression volume is small, and the compression volume is smaller than that of Kryo and Protobuf; Smaller than kryo because kryo needs to write the registration number of each object
+Intelligent syntax, incorrect protocol definitions will fail to start the program and give an error warning
+Improve development efficiency, fully support POJO development, very easy to use
 ```
 
-### Ⅵ. 协议规范
+### Ⅴ. Why small
 
-- 协议类必须实现com.zfoo.protocol.model.packet.IPacket接口，协议类的的protocolId不能重复
-- 协议类必须有一个标识为：public static final transient short PROTOCOL_ID的"协议序列号"，这个协议号的值必须和IPacket接口返回的值一样
-- 协议类必须是简单的javabean，不能继承任何其它的类，但是可以继承接口
+- Lightweight implementation, core serialization and deserialization code of about a thousand lines
+- Optimized the zigzag and varint encoding algorithms for int and long, avoiding some redundant method calls and bit
+  operations
+- The data compression volume is small, and the compression volume is smaller than that of Kryo and Protobuf; Smaller
+  than kryo because kryo needs to write the registration number of each object
+- Intelligent syntax, incorrect protocol definitions will fail to start the program and give an error warning
+- Improve development efficiency, fully support POJO development, very easy to use
 
-- 默认的数据格式支持，无需用户手动注册，[参考类定义](src/test/java/com/zfoo/protocol/packet/ComplexObject.java)
-  - boolean，byte，short，int，long，float，double，char，String
-  - Boolean，Byte，Short，Integer，Long，Float，Double，Character，序列化的时候如果null，会给个默认值0（Character默认值为Character.MIN_VALUE）
-  - int[]，Integer[]，如果是null，则解析后的为一个长度为0的数组
-    - 原生泛型List，Set，Map，反序列化返回类型为HashSet，ArrayList，HashMap，并且空指针安全（返回大小为0的集合）
-    - List<Integer>，必须指定泛型类，如果发送的是[1,1,null,1]，接收到的是[1,1,0,1]
-    - List<XXXClass>，如果发送的是[obj,obj,null,obj]，接收到的是[obj,obj,null,obj]，即引用类型序列化之前为null，序列化之后同样为null
+```
+The current size of the serialized object is as follows:
+Simple objects, zfoo package size 8, kryo package size 5, protobuf package size 8
+Regular objects, ZFOO package size 430, KRYO package size 483, Protobuf package size 793
+For complex objects, ZFOO package size 2216, KRYO package size 2528, and Protobuf package size 5091
+```
 
-- 不支持的数据格式，因为zfoo会自动识别不支持的类型并且给出错误警告，所以用户不必太关心
-  - int[][]，二维以上数组，考虑到不是所有语言都支持多维数组
-  - List<Integer>[]，Map<Integer, Integer>[]，Java语言本身就没有支持泛型类数组
-  - List<int[]>，Map<Integer, Integer[]>，泛型里面套数组，这种写法看起来比较奇怪，实际使用的地方很少
-  - 枚举类，考虑到很多其他语言不支持枚举类，可以用int或者string在代码层面做替换
-  - 自定义泛型类XXXClass<T>，泛型类在很多框架中都极易出现性能上和解析上的问题，而且并不是所有语言都支持
-  - 循环引用，虽然底层支持循环引用，但是考虑到循环引用带来语义上难以理解，容易出现错误，所以就屏蔽了
+### Ⅵ. Data type
 
-### Ⅵ. 用途
+- Default data format support eliminates the need for users to register
+  manually.[Reference class definition](src/test/java/com/zfoo/protocol/packet/ComplexObject.java)
+    - boolean，byte，short，int，long，float，double，String
+    - Boolean，Byte，Short，Integer，Long，Float，Double，String，If it is null during serialization, a default value will be
+      given
+    - int[]，Integer[]，If it is null, it is parsed as an array of length 0
+        - Native generic List, Set, Map, deserialization return type Hash Set, Array List, Hash Map, and null pointer
+          safe (returns a collection of size 0)
+        - List<Integer>，You must specify a generic class if [1,1,null,1] is sent and [1,1,0,1] is received
+        - List<XXXClass>，If [obj,obj,null,obj] is sent, [obj,obj,null,obj] is received, that is, the reference type is
+          null before serialization, and it is also null after serialization
 
-- 通信协议
-- 对象复制，深克隆
+- Unsupported data formats, because ZFOO automatically recognizes unsupported types and gives error warnings, so users
+  don't have to care too much
+    - int[][]，Arrays above two dimensions, considering that not all languages support multidimensional arrays
+    - List<Integer>[]，Map<Integer, Integer>[]，The Java language itself does not support generic class arrays
+    - List<int[]>，Map<Integer, Integer[]>，Generics are set in arrays, which looks strange and has few actual uses
+    - char or Character, many other languages do not support char and can be replaced with string
+    - Enumerated classes, many other languages do not support enumerated classes and can be replaced with int or string
+    - Custom generic class XXX Class, <T>generic classes are prone to performance and parsing problems in many
+      frameworks, and are not supported in all languages
+    - Circular references, although the underlying support circular references, but considering that circular references
+      bring semantically difficult to understand and prone to errors, so they are blocked
+
+### Ⅶ. Protocol specifications
+
+- The protocol class must be a simple javabean, not inheriting from any other class, but can inherit an interface
+
+- The protocol number is defined as a short type to reduce the packet size and memory size, a packet can be reduced by 2
+  bytes, and the application memory of each protocol can also be reduced by 6 byte(protocols + IProtocolRegistration +
+  protocolIdMap)
+
+```
+It is difficult for a project's protocol body class to exceed 3 w, and there will be tools that automatically package 
+your protocol number a little more compactly, so that your protocol number will not exceed 3 w
+```
+
+- There are three ways to indicate that the protocol class
+    - The first uses annotations: @Protocol(id = protocolId)
+      ```
+      @Protocol(id = 104)
+      public class SimpleObject {
+      
+          public int c;
+          public boolean g;
+      
+      }
+      ```
+
+    - The second use: Register the agreement through Protocol Manager.initProtocolAuto() without writing the protocol
+      number
+      ```
+      public class SimpleObject {
+      
+          public int c;
+      
+          public boolean g;
+      
+      }
+      ```
+
+    - The third use: Register the protocol through ProtocolManager.initProtocol(xmlProtocols) in the protocol.xml file
+      ```
+      <protocols>
+          <!-- Use class path -->
+          <module id="1" name="common">
+              <protocol id="100" location="com.zfoo.protocol.packet.ComplexObject"/>
+              <protocol id="101" location="com.zfoo.protocol.packet.NormalObject"/>
+              <protocol id="102" location="com.zfoo.protocol.packet.ObjectA"/>
+              <protocol id="103" location="com.zfoo.protocol.packet.ObjectB"/>
+              <protocol id="104" location="com.zfoo.protocol.packet.SimpleObject"/>
+              <protocol id="105" location="com.zfoo.protocol.packet.VeryBigObject"/>
+              <protocol id="106" location="com.zfoo.protocol.packet.EmptyObject"/>
+          </module>
+          <!-- Use a package name scans all protocol classes under the package path -->
+          <module id="2" name="native">
+              <protocol location="com.zfoo.net.packet.common"/>
+              <protocol location="com.zfoo.tank.common.protocol.common"/>
+          </module>
+      </protocols>
+      ```   
+
+    - The fourth use: generate a protocol with a protocol number by defining a proto file, so that the protocol can be
+      easily registered
+      ```
+      syntax = "proto3";
+      package test.message;
+    
+      message SimpleObject {
+          int64 aa = 1;
+      }
+    
+      // If the tag of a field exceeds 1000, the field is considered to be a compatible protocol field
+      message OneMessage {
+          // This is a comment on the field
+          int64 id = 1;
+          // This is equivalent to adding a @Compatible annotation to this field
+          string name = 1001;
+      }
+      ```
+
+- If you add a field for version compatibility, you need to add a Compatible annotation, and the order needs to be
+  naturally increased, so as to ensure that the old and new protocols can be compatible with each other, Protocol
+  nesting is also still compatible
+- In order to be compatible with versions and avoid modifying field names, default uses field names to read and write
+  in the natural order of strings (can also be customized), so it will cause exceptions in serialization
+- The official environment does not necessarily have to delete an unwanted field in order to be version compatible and
+  avoid reducing fields
+- Among the six principles of design patterns, the principle of opening and closing is open to expansion and closed to
+  modification. The design of the protocol should also adhere to this principle when it comes to functionality,
+  prioritizing the addition of new protocols over modifying existing ones
+
+### Ⅷ. The difference between zfoo and Protobuf
+
+- Protobuf can delete fields, but ZFOO does not support deleting fields, which improves performance by 1x and reduces
+  the size by 1x at the expense
+
+```
+In fact, the officially launched project almost did not encounter anyone who would delete the field, 
+and if this field was deleted, the server had to change the code not to reference the deleted field, 
+and the client had to change the code not to reference the deleted field, which doubled the workload. 
+If either of them forgets to modify the code, it will directly report an error, 
+so adding a discarded field @Deprecated comment to this field in the actual project can avoid a lot of unnecessary trouble.
+```
+
+- zfoo takes the intersection of type declarations in all languages, instead of protobuf taking the union, simplifying
+  the type implementation of protobuf
+    - protobuf
+      ```
+      double
+      float
+      int32
+      int64
+      uint32
+      uint64
+      sint32
+      sint64
+      fixed32
+      fixed64
+      sfixed32
+      sfixed64
+      bool
+      string
+      bytes
+      bytes
+      ```
+    - zfoo
+      ```
+      float
+      double
+      byte
+      int16
+      int32
+      int64
+      bool
+      string
+      ```
+
+- zfoo takes the intersection of the grammars of all languages, instead of the union of protobuf, and adds the grammar
+  implementation of protobuf
+    - protobuf
+      ```
+      Collection nesting syntax is not supported
+      ```
+    - zfoo
+      ```
+      Supports nested collection syntax
+      ```
+
+- Simplified protobuf syntax, no enumeration, no oneof, no optional

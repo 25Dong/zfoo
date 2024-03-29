@@ -16,9 +16,8 @@ package com.zfoo.storage.schema;
 import com.zfoo.protocol.util.DomUtils;
 import com.zfoo.protocol.util.StringUtils;
 import com.zfoo.storage.StorageContext;
-import com.zfoo.storage.interpreter.ExcelResourceReader;
+import com.zfoo.storage.config.StorageConfig;
 import com.zfoo.storage.manager.StorageManager;
-import com.zfoo.storage.model.config.StorageConfig;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.xml.BeanDefinitionParser;
@@ -26,8 +25,7 @@ import org.springframework.beans.factory.xml.ParserContext;
 import org.w3c.dom.Element;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public class StorageDefinitionParser implements BeanDefinitionParser {
 
@@ -40,7 +38,7 @@ public class StorageDefinitionParser implements BeanDefinitionParser {
         // 解析StorageConfig的配置
         parseStorageConfig(element, parserContext);
 
-        // 注册StorageContext，ExcelResourceReader
+        // 注册StorageContext
         registerBeanDefinition(parserContext);
 
         // 注册StorageManager
@@ -59,17 +57,18 @@ public class StorageDefinitionParser implements BeanDefinitionParser {
 
         var scanElement = DomUtils.getFirstChildElementByTagName(element, "scan");
         if (scanElement == null) {
-            throw new RuntimeException("XML文件缺少[scan]元素定义");
+            throw new RuntimeException("The XML file is missing a [scan] element definition");
         }
         var resourceElement = DomUtils.getFirstChildElementByTagName(element, "resource");
         if (resourceElement == null) {
-            throw new RuntimeException("XML文件缺少[resource]元素定义");
+            throw new RuntimeException("The XML file is missing a [resource] element definition");
         }
 
         resolvePlaceholder("id", "id", builder, element, parserContext);
         resolvePlaceholder("package", "scanPackage", builder, scanElement, parserContext);
+        resolvePlaceholder("writeable", "writeable", builder, scanElement, parserContext);
+        resolvePlaceholder("recycle", "recycle", builder, scanElement, parserContext);
         resolvePlaceholder("location", "resourceLocation", builder, resourceElement, parserContext);
-        resolvePlaceholder("suffix", "resourceSuffix", builder, resourceElement, parserContext);
 
         parserContext.getRegistry().registerBeanDefinition(clazz.getCanonicalName(), builder.getBeanDefinition());
     }
@@ -83,12 +82,6 @@ public class StorageDefinitionParser implements BeanDefinitionParser {
 
         // 注册StorageContext
         clazz = StorageContext.class;
-        name = StringUtils.uncapitalize(clazz.getName());
-        builder = BeanDefinitionBuilder.rootBeanDefinition(clazz);
-        registry.registerBeanDefinition(name, builder.getBeanDefinition());
-
-        // 注册ExcelResourceReader
-        clazz = ExcelResourceReader.class;
         name = StringUtils.uncapitalize(clazz.getName());
         builder = BeanDefinitionBuilder.rootBeanDefinition(clazz);
         registry.registerBeanDefinition(name, builder.getBeanDefinition());

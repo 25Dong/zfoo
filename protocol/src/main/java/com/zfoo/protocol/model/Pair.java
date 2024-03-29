@@ -20,8 +20,7 @@ import java.util.Objects;
  *
  * @param <K> 键类型
  * @param <V> 值类型
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public class Pair<K, V> {
 
@@ -75,7 +74,7 @@ public class Pair<K, V> {
 
     @Override
     public int hashCode() {
-        return Objects.hash(key, value);
+        return Objects.hashCode(key);
     }
 
     @Override

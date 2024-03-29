@@ -13,14 +13,13 @@
 
 package com.zfoo.storage.manager;
 
-import com.zfoo.storage.model.vo.Storage;
-import org.springframework.lang.Nullable;
+import com.zfoo.storage.config.StorageConfig;
+import com.zfoo.storage.model.IStorage;
 
 import java.util.Map;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public interface IStorageManager {
 
@@ -39,13 +38,11 @@ public interface IStorageManager {
      */
     void initAfter();
 
-    @Nullable
-    Storage<?, ?> getStorage(Class<?> clazz);
+    <K, V, T extends IStorage<K, V>> T  getStorage(Class<V> clazz);
 
-    Map<Class<?>, Boolean> allStorageUsableMap();
+    Map<Class<?>, IStorage<?, ?>> storageMap();
 
-    Map<Class<?>, Storage<?, ?>> storageMap();
+    void updateStorage(Class<?> clazz, IStorage<?, ?> storage);
 
-    void updateStorage(Class<?> clazz, Storage<?, ?> storage);
-
+    StorageConfig storageConfig();
 }

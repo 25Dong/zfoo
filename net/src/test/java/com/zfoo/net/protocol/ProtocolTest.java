@@ -15,9 +15,6 @@ package com.zfoo.net.protocol;
 
 import com.zfoo.net.NetContext;
 import com.zfoo.net.packet.*;
-import com.zfoo.net.packet.model.DecodedPacketInfo;
-import com.zfoo.net.packet.service.IPacketService;
-import com.zfoo.net.packet.service.PacketService;
 import com.zfoo.net.router.attachment.SignalAttachment;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -31,8 +28,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public class ProtocolTest {
 
@@ -67,7 +63,6 @@ public class ProtocolTest {
         cm.setB(Short.MIN_VALUE);
         cm.setC(Integer.MIN_VALUE);
         cm.setD(Long.MIN_VALUE);
-        cm.setE('e');
         cm.setF("Hello Jaysunxiao，this is the World!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 
         ByteBuf writeBuff = Unpooled.directBuffer();

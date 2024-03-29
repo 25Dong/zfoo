@@ -13,19 +13,17 @@
 
 package com.zfoo.net.packet;
 
-import com.zfoo.protocol.IPacket;
+import com.zfoo.protocol.anno.Protocol;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
-public class CM_Map implements IPacket {
-
-    public static final transient short PROTOCOL_ID = 1120;
+@Protocol(id = 1120, enhance = false)
+public class CM_Map {
 
     private Map<Integer, Integer> map;
 
@@ -37,21 +35,12 @@ public class CM_Map implements IPacket {
 
     private Map<List<Integer>, Map<List<Integer>, ObjectA>> mapWithListAndMap;
 
-    public static short getProtocolId() {
-        return PROTOCOL_ID;
-    }
-
     public Map<Integer, Integer> getMap() {
         return map;
     }
 
     public void setMap(Map<Integer, Integer> map) {
         this.map = map;
-    }
-
-    @Override
-    public short protocolId() {
-        return PROTOCOL_ID;
     }
 
     @Override

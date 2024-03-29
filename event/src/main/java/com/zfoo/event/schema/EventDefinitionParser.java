@@ -22,8 +22,7 @@ import org.springframework.beans.factory.xml.ParserContext;
 import org.w3c.dom.Element;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public class EventDefinitionParser implements BeanDefinitionParser {
 

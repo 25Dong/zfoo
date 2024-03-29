@@ -1,6 +1,6 @@
 package com.zfoo.net.base.netty.timeserver2;
 
-import com.zfoo.util.ThreadUtils;
+import com.zfoo.protocol.util.ThreadUtils;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -17,7 +17,7 @@ import org.junit.Test;
 /**
  * 通过换行符解决半包读写的问题
  *
- * @author jaysunxiao
+ * @author godotg
  * @version 1.0
  * @since 2017 05.22 18:23
  */

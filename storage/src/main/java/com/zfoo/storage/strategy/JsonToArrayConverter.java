@@ -22,8 +22,7 @@ import java.util.Collections;
 import java.util.Set;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public class JsonToArrayConverter implements ConditionalGenericConverter {
 

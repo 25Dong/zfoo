@@ -13,8 +13,8 @@
 
 package com.zfoo.scheduler.util;
 
+import com.zfoo.protocol.util.FastThreadLocalAdapter;
 import com.zfoo.scheduler.manager.SchedulerBus;
-import io.netty.util.concurrent.FastThreadLocal;
 import org.springframework.scheduling.support.CronExpression;
 
 import java.text.ParseException;
@@ -26,12 +26,9 @@ import java.util.Date;
 import java.util.TimeZone;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public abstract class TimeUtils {
-
-    private static long timestamp = System.currentTimeMillis();
 
     // 一秒钟对应的纳秒数
     public static final long NANO_PER_SECOND = 1_000_000_000;
@@ -58,32 +55,20 @@ public abstract class TimeUtils {
     // 统一的时间格式模板
     public static final String DATE_FORMAT_TEMPLATE_FOR_DAY = "yyyy-MM-dd";
 
-    private static final FastThreadLocal<SimpleDateFormat> DATE_FORMAT = new FastThreadLocal<SimpleDateFormat>() {
-        @Override
-        protected SimpleDateFormat initialValue() {
-            return new SimpleDateFormat(DATE_FORMAT_TEMPLATE);
-        }
-    };
+    private static final FastThreadLocalAdapter<SimpleDateFormat> DATE_FORMAT = new FastThreadLocalAdapter<>(() -> new SimpleDateFormat(DATE_FORMAT_TEMPLATE));
 
-    private static final FastThreadLocal<SimpleDateFormat> SIMPLE_DATE_FORMAT = new FastThreadLocal<SimpleDateFormat>() {
-        @Override
-        protected SimpleDateFormat initialValue() {
-            return new SimpleDateFormat(SIMPLE_DATE_FORMAT_TEMPLATE);
-        }
-    };
+    private static final FastThreadLocalAdapter<SimpleDateFormat> SIMPLE_DATE_FORMAT = new FastThreadLocalAdapter<>(() -> new SimpleDateFormat(SIMPLE_DATE_FORMAT_TEMPLATE));
 
-    private static final FastThreadLocal<SimpleDateFormat> DATE_FORMAT_FOR_DAY = new FastThreadLocal<SimpleDateFormat>() {
-        @Override
-        protected SimpleDateFormat initialValue() {
-            return new SimpleDateFormat(DATE_FORMAT_TEMPLATE_FOR_DAY);
-        }
-    };
+    private static final FastThreadLocalAdapter<SimpleDateFormat> DATE_FORMAT_FOR_DAY = new FastThreadLocalAdapter<>(() -> new SimpleDateFormat(DATE_FORMAT_TEMPLATE_FOR_DAY));
 
     static {
         currentTimeMillis();
         // 调用一下静态方法，使SchedulerBus静态代码块初始化
         SchedulerBus.refreshMinTriggerTimestamp();
     }
+
+    // volatile reduces the cache hit ratio of the CPU
+    private static long timestamp = System.currentTimeMillis();
 
     /**
      * 获取精确的时间戳
@@ -94,9 +79,9 @@ public abstract class TimeUtils {
     }
 
     /**
-     * 获取最多只有一秒延迟的粗略时间戳，适用于对时间精度要求不高的场景，最多只有一秒误差
+     * CN：获取最多只有一秒延迟的粗略时间戳，适用于对时间精度要求不高的场景，比System.currentTimeMillis()的性能高10倍
      * <p>
-     * 比System.currentTimeMillis()的性能高10倍
+     * EN：Obtain a coarse timestamp with a delay of up to one second, which is suitable for scenarios that do not require high time accuracy
      */
     public static long now() {
         return timestamp;

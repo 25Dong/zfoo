@@ -13,40 +13,31 @@
 package com.zfoo.net.router;
 
 import com.zfoo.event.manager.EventBus;
-import com.zfoo.net.router.route.SignalBridge;
+import com.zfoo.net.router.attachment.SignalAttachment;
 import com.zfoo.scheduler.util.TimeUtils;
-import com.zfoo.util.ThreadUtils;
 import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 @Ignore
 public class SignalBridgeTest {
 
-    private final AtomicInteger atomicInteger = new AtomicInteger(0);
-
-    private final int executorSize = EventBus.EXECUTORS_SIZE / 2;
+    private final int executorSize = Runtime.getRuntime().availableProcessors() * 2;
     private final int count = 100_0000;
     private final int totalIndex = 10;
 
     @Test
     public void test() throws InterruptedException {
-        // 预热
-        arrayTest();
-        mapTest();
-
-        ThreadUtils.sleep(3000);
-
-        arrayTest();
-        mapTest();
-        System.out.println(atomicInteger.get());
+        for (int i = 0; i < 10; i++) {
+            arrayTest();
+        }
+        SignalBridge.status();
+        System.out.println(SignalAttachment.ATOMIC_ID.get());
     }
 
     public void arrayTest() throws InterruptedException {
@@ -54,7 +45,7 @@ public class SignalBridgeTest {
 
         var countDownLatch = new CountDownLatch(executorSize);
         for (var i = 0; i < executorSize; i++) {
-            EventBus.execute(i).execute(new Runnable() {
+            EventBus.execute(i, new Runnable() {
                 @Override
                 public void run() {
                     addAndRemoveArray();
@@ -63,57 +54,22 @@ public class SignalBridgeTest {
             });
         }
         countDownLatch.await();
-        SignalBridge.status();
         System.out.println(TimeUtils.currentTimeMillis() - startTime);
     }
 
-    public void mapTest() throws InterruptedException {
-        var startTime = TimeUtils.currentTimeMillis();
-
-        var countDownLatch = new CountDownLatch(executorSize);
-        for (int i = 0; i < executorSize; i++) {
-            EventBus.execute(i).execute(new Runnable() {
-                @Override
-                public void run() {
-                    addAndRemoveMap();
-                    countDownLatch.countDown();
-                }
-            });
-        }
-        countDownLatch.await();
-        PacketSignalMap.status();
-        System.out.println(TimeUtils.currentTimeMillis() - startTime);
-    }
 
     public void addAndRemoveArray() {
-        var list = new ArrayList<Integer>(totalIndex);
+        var signalList = new ArrayList<Integer>(totalIndex);
         for (var i = 0; i < count; i++) {
-            list.clear();
+            signalList.clear();
             for (var j = 0; j < totalIndex; j++) {
-                var index = atomicInteger.incrementAndGet();
-                list.add(index);
-                PacketSignalArray.addSignalAttachment(index);
+                var signalAttachment = new SignalAttachment();
+                SignalBridge.addSignalAttachment(signalAttachment);
+                signalList.add(signalAttachment.getSignalId());
             }
 
-            for (var index : list) {
-                PacketSignalArray.removeSignalAttachment(index);
-            }
-        }
-    }
-
-
-    public void addAndRemoveMap() {
-        var list = new ArrayList<Integer>(totalIndex);
-        for (var i = 0; i < count; i++) {
-            list.clear();
-            for (var j = 0; j < totalIndex; j++) {
-                var index = atomicInteger.incrementAndGet();
-                list.add(index);
-                PacketSignalMap.addSignalAttachment(index);
-            }
-
-            for (var index : list) {
-                PacketSignalMap.removeSignalAttachment(index);
+            for (var signalId : signalList) {
+                SignalBridge.removeSignalAttachment(signalId);
             }
         }
     }

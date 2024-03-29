@@ -14,25 +14,26 @@
 package com.zfoo.scheduler.manager;
 
 import com.zfoo.protocol.collection.CollectionUtils;
+import com.zfoo.protocol.util.StringUtils;
+import com.zfoo.protocol.util.ThreadUtils;
 import com.zfoo.scheduler.SchedulerContext;
-import com.zfoo.scheduler.model.vo.SchedulerDefinition;
+import com.zfoo.scheduler.enhance.SchedulerDefinition;
 import com.zfoo.scheduler.util.TimeUtils;
+import io.netty.util.concurrent.FastThreadLocalThread;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public abstract class SchedulerBus {
+
 
     private static final Logger logger = LoggerFactory.getLogger(SchedulerBus.class);
 
@@ -41,13 +42,18 @@ public abstract class SchedulerBus {
      * scheduler默认只有一个单线程的线程池
      */
     private static final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(new SchedulerThreadFactory(1));
+
+    /**
+     * executor创建的线程id号
+     */
+    private static long threadId = 0;
+
     /**
      * 上一次trigger触发时间
      */
     private static long lastTriggerTimestamp = 0L;
 
 
-    public static final long TRIGGER_MILLIS_INTERVAL = TimeUtils.MILLIS_PER_SECOND;
     /**
      * 在scheduler中，最小的triggerTimestamp
      */
@@ -60,7 +66,31 @@ public abstract class SchedulerBus {
             } catch (Exception e) {
                 logger.error("scheduler triggers an error.", e);
             }
-        }, 0, TRIGGER_MILLIS_INTERVAL, TimeUnit.MILLISECONDS);
+        }, 0, TimeUtils.MILLIS_PER_SECOND, TimeUnit.MILLISECONDS);
+    }
+
+    public static class SchedulerThreadFactory implements ThreadFactory {
+
+        private final int poolNumber;
+        private final AtomicInteger threadNumber = new AtomicInteger(1);
+        private final ThreadGroup group;
+
+        public SchedulerThreadFactory(int poolNumber) {
+            this.group = Thread.currentThread().getThreadGroup();
+            this.poolNumber = poolNumber;
+        }
+
+        @Override
+        public Thread newThread(Runnable runnable) {
+            var threadName = StringUtils.format("scheduler-p{}-t{}", poolNumber, threadNumber.getAndIncrement());
+            var thread = new FastThreadLocalThread(group, runnable, threadName);
+            thread.setDaemon(false);
+            thread.setPriority(Thread.NORM_PRIORITY);
+            thread.setUncaughtExceptionHandler((t, e) -> logger.error(t.toString(), e));
+            threadId = thread.getId();
+            return thread;
+        }
+
     }
 
 
@@ -111,8 +141,10 @@ public abstract class SchedulerBus {
                 // 到达触发时间，则执行runnable方法
                 try {
                     scheduler.getScheduler().invoke();
+                } catch (Exception e) {
+                    logger.error("scheduler invoke exception", e);
                 } catch (Throwable t) {
-                    logger.error("scheduler任务调度未知异常", t);
+                    logger.error("scheduler invoke error", t);
                 }
                 // 重新设置下一次的触发时间戳
                 triggerTimestamp = TimeUtils.nextTimestampByCronExpression(scheduler.getCronExpression(), timestampZonedDataTime);
@@ -134,46 +166,18 @@ public abstract class SchedulerBus {
     /**
      * 不断执行的周期循环任务
      */
-    public static void scheduleAtFixedRate(Runnable runnable, long period, TimeUnit unit) {
-        if (SchedulerContext.isStop()) {
-            return;
-        }
+    public static ScheduledFuture<?> scheduleAtFixedRate(Runnable runnable, long period, TimeUnit unit) {
 
-        executor.scheduleAtFixedRate(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    runnable.run();
-                } catch (Exception e) {
-                    logger.error("scheduleAtFixedRate未知exception异常", e);
-                } catch (Throwable t) {
-                    logger.error("scheduleAtFixedRate未知error异常", t);
-                }
-            }
-        }, 0, period, unit);
+        return executor.scheduleAtFixedRate(ThreadUtils.safeRunnable(runnable), 0, period, unit);
     }
 
 
     /**
      * 固定延迟执行的任务
      */
-    public static void schedule(Runnable runnable, long delay, TimeUnit unit) {
-        if (SchedulerContext.isStop()) {
-            return;
-        }
+    public static ScheduledFuture<?> schedule(Runnable runnable, long delay, TimeUnit unit) {
 
-        executor.schedule(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    runnable.run();
-                } catch (Exception e) {
-                    logger.error("schedule未知exception异常", e);
-                } catch (Throwable t) {
-                    logger.error("schedule未知error异常", t);
-                }
-            }
-        }, delay, unit);
+        return executor.schedule(ThreadUtils.safeRunnable(runnable), delay, unit);
     }
 
     /**
@@ -184,6 +188,10 @@ public abstract class SchedulerBus {
             return;
         }
 
-        schedulerDefList.add(SchedulerDefinition.valueOf(cron, runnable));
+        registerScheduler(SchedulerDefinition.valueOf(cron, runnable));
+    }
+
+    public static Executor threadExecutor(long currentThreadId) {
+        return threadId == currentThreadId ? executor : null;
     }
 }

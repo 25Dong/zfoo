@@ -15,11 +15,11 @@ package com.zfoo.protocol.serializer.reflect;
 
 import com.zfoo.protocol.buffer.ByteBufUtils;
 import com.zfoo.protocol.registration.field.IFieldRegistration;
+import com.zfoo.protocol.util.StringUtils;
 import io.netty.buffer.ByteBuf;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public class StringSerializer implements ISerializer {
 
@@ -33,5 +33,15 @@ public class StringSerializer implements ISerializer {
     @Override
     public Object readObject(ByteBuf buffer, IFieldRegistration fieldRegistration) {
         return ByteBufUtils.readString(buffer);
+    }
+
+    @Override
+    public Object defaultValue(IFieldRegistration fieldRegistration) {
+        return StringUtils.EMPTY;
+    }
+
+    @Override
+    public int predictionLength(IFieldRegistration fieldRegistration) {
+        return 23;
     }
 }

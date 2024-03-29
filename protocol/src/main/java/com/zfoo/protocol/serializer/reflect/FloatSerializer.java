@@ -18,8 +18,7 @@ import com.zfoo.protocol.registration.field.IFieldRegistration;
 import io.netty.buffer.ByteBuf;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public class FloatSerializer implements ISerializer {
 
@@ -33,5 +32,15 @@ public class FloatSerializer implements ISerializer {
     @Override
     public Object readObject(ByteBuf buffer, IFieldRegistration fieldRegistration) {
         return ByteBufUtils.readFloatBox(buffer);
+    }
+
+    @Override
+    public Object defaultValue(IFieldRegistration fieldRegistration) {
+        return ByteBufUtils.ZERO_FLOAT;
+    }
+
+    @Override
+    public int predictionLength(IFieldRegistration fieldRegistration) {
+        return 4;
     }
 }

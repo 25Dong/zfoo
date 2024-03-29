@@ -16,8 +16,7 @@ package com.zfoo.protocol.model;
 /**
  * T cardinal number that is the sum of three and one.
  *
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public class Quaternion<A, B, C, D> {
 

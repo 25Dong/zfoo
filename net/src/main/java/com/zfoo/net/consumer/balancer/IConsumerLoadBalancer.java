@@ -14,29 +14,30 @@
 package com.zfoo.net.consumer.balancer;
 
 import com.zfoo.net.router.attachment.SignalAttachment;
-import com.zfoo.net.session.model.Session;
-import com.zfoo.protocol.IPacket;
+import com.zfoo.net.session.Session;
 import org.springframework.lang.Nullable;
 
+import java.util.List;
+
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public interface IConsumerLoadBalancer {
 
     /**
+     * Select a service provider that can provide interface/packet services
      * 只有一致性hash会使用这个argument参数，如果在一致性hash没有传入argument默认使用随机负载均衡
      *
      * @param packet   请求包
      * @param argument 计算参数
      * @return 一个服务提供者的session
      */
-    Session loadBalancer(IPacket packet, @Nullable Object argument);
+    Session selectProvider(List<Session> providers, Object packet, @Nullable Object argument);
 
-    default void beforeLoadBalancer(Session session, IPacket packet, SignalAttachment attachment) {
+    default void beforeLoadBalancer(Session session, Object packet, SignalAttachment attachment) {
     }
 
-    default void afterLoadBalancer(Session session, IPacket packet, SignalAttachment attachment) {
+    default void afterLoadBalancer(Session session, Object packet, SignalAttachment attachment) {
     }
 
 }

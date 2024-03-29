@@ -13,14 +13,15 @@
 
 package com.zfoo.net.router.exception;
 
-/**
- * @author jaysunxiao
- * @version 3.0
- */
-public class NetTimeOutException extends RuntimeException {
+import com.zfoo.protocol.exception.RunException;
 
-    public NetTimeOutException(String s) {
-        super(s);
+/**
+ * @author godotg
+ */
+public class NetTimeOutException extends RunException {
+
+    public NetTimeOutException(String template, Object... args) {
+        super(template, args);
     }
 
 }

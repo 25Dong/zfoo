@@ -17,13 +17,11 @@ import org.apache.zookeeper.CreateMode;
 import org.springframework.lang.Nullable;
 
 import java.util.List;
-import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public interface IRegistry {
 
@@ -41,7 +39,10 @@ public interface IRegistry {
 
     List<String> children(String path);
 
-    Set<RegisterVO> remoteProviderRegisterSet();
+    /**
+     * 获取所有服务提供者的注册信息
+     */
+    List<Register> remoteProviderRegisters();
 
     /**
      * 监听path路径下的更新

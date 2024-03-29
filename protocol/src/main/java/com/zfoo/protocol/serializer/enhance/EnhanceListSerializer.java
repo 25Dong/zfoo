@@ -24,8 +24,7 @@ import com.zfoo.protocol.util.StringUtils;
 import java.lang.reflect.Field;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public class EnhanceListSerializer implements IEnhanceSerializer {
 
@@ -67,13 +66,21 @@ public class EnhanceListSerializer implements IEnhanceSerializer {
         var size = "size" + GenerateProtocolFile.index.getAndIncrement();
         builder.append(StringUtils.format("int {}={}.readInt($1);", size, EnhanceUtils.byteBufUtils));
 
-        builder.append(StringUtils.format("List {} = CollectionUtils.newFixedList({});", list, size));
+        builder.append(StringUtils.format("List {} = CollectionUtils.newList({});", list, size));
 
         var i = "i" + GenerateProtocolFile.index.getAndIncrement();
 
         builder.append(StringUtils.format("for(int {}=0; {}<{}; {}++){", i, i, size, i));
         var readObject = EnhanceUtils.enhanceSerializer(listField.getListElementRegistration().serializer()).readObject(builder, field, listField.getListElementRegistration());
         builder.append(StringUtils.format("{}.add({});}", list, readObject));
+        return list;
+    }
+
+    @Override
+    public String defaultValue(StringBuilder builder, Field field, IFieldRegistration fieldRegistration) {
+        var listField = (ListField) fieldRegistration;
+        var list = "list" + GenerateProtocolFile.index.getAndIncrement();
+        builder.append(StringUtils.format("List {} = CollectionUtils.newList(0);", list));
         return list;
     }
 

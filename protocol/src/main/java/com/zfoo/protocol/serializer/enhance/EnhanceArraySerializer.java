@@ -24,8 +24,7 @@ import com.zfoo.protocol.util.StringUtils;
 import java.lang.reflect.Field;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public class EnhanceArraySerializer implements IEnhanceSerializer {
 
@@ -79,5 +78,15 @@ public class EnhanceArraySerializer implements IEnhanceSerializer {
         builder.append(StringUtils.format("{}[{}] = {};}", array, i, readObject));
         return array;
     }
+
+    @Override
+    public String defaultValue(StringBuilder builder, Field field, IFieldRegistration fieldRegistration) {
+        var arrayField = (ArrayField) fieldRegistration;
+        var arrayName = CutDownArraySerializer.getInstance().getArrayClassName(arrayField);
+        var array = "array" + GenerateProtocolFile.index.getAndIncrement();
+        builder.append(StringUtils.format("{}[] {} = new {}[0];", arrayName, array, arrayName));
+        return array;
+    }
+
 
 }

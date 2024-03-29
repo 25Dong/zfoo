@@ -18,10 +18,11 @@ import com.zfoo.protocol.registration.field.IFieldRegistration;
 import java.lang.reflect.Field;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public interface ILuaSerializer {
+
+    String fieldDefaultValue(Field field, IFieldRegistration fieldRegistration);
 
     void writeObject(StringBuilder builder, String objectStr, int deep, Field field, IFieldRegistration fieldRegistration);
 

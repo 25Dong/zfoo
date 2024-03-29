@@ -13,14 +13,12 @@
 
 package com.zfoo.protocol.registration;
 
-import com.zfoo.protocol.IPacket;
 import io.netty.buffer.ByteBuf;
 
 import java.lang.reflect.Constructor;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public interface IProtocolRegistration {
 
@@ -31,14 +29,9 @@ public interface IProtocolRegistration {
     Constructor<?> protocolConstructor();
 
     /**
-     * 协议接收器，回调方法，主要是存放一些额外的参数
-     */
-    Object receiver();
-
-    /**
      * 序列化
      */
-    void write(ByteBuf buffer, IPacket packet);
+    void write(ByteBuf buffer, Object packet);
 
     /**
      * 反序列化

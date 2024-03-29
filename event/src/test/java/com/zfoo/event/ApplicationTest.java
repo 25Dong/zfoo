@@ -14,35 +14,25 @@
 package com.zfoo.event;
 
 import com.zfoo.event.manager.EventBus;
-import com.zfoo.util.ThreadUtils;
-import org.junit.Ignore;
+import com.zfoo.protocol.util.ThreadUtils;
 import org.junit.Test;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
-@Ignore
 public class ApplicationTest {
 
-    // 事件总线教程，核心思想是设计模式中的观察者模式
+    // Event Bus tutorial, the core idea is the observer pattern.(核心思想是设计模式中的观察者模式)
     @Test
     public void startEventTest() {
-        // 加载配置文件，配置文件中必须引入event
+        // load the configuration file which must import event.(加载配置文件，配置文件中必须引入event)
         var context = new ClassPathXmlApplicationContext("application.xml");
 
-        // 事件的接受需要在被Spring管理的bean的方法上加上@EventReceiver注解，即可自动注册事件的监听
-        // 参考MyController1中的标准注册方法
+        // see receiver method of MyController1 and MyController2
+        EventBus.post(MyNoticeEvent.valueOf("我的事件"));
 
-        // 抛出同步事件，事件会被当前线程立刻执行，注意日志打印的线程号
-        EventBus.syncSubmit(MyNoticeEvent.valueOf("同步事件"));
-
-        // 抛出异步事件，事件会被不会立刻执行，注意日志打印的线程号
-        EventBus.asyncSubmit(MyNoticeEvent.valueOf("异步事件"));
-
-        // 睡眠3秒，等待异步事件执行完
-        ThreadUtils.sleep(3000);
+        ThreadUtils.sleep(1000);
     }
 
 }

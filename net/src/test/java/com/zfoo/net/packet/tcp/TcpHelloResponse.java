@@ -12,23 +12,15 @@
 
 package com.zfoo.net.packet.tcp;
 
-import com.zfoo.protocol.IPacket;
+import com.zfoo.protocol.anno.Protocol;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
-public class TcpHelloResponse implements IPacket {
-
-    public static final transient short PROTOCOL_ID = 1301;
+@Protocol(id = 1301)
+public class TcpHelloResponse {
 
     private String message;
-
-
-    @Override
-    public short protocolId() {
-        return PROTOCOL_ID;
-    }
 
     public String getMessage() {
         return message;

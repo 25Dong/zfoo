@@ -12,61 +12,63 @@
 
 package com.zfoo.net.router.attachment;
 
-import com.zfoo.protocol.IPacket;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.zfoo.protocol.anno.Note;
+import com.zfoo.protocol.anno.Protocol;
 import com.zfoo.scheduler.util.TimeUtils;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * 附加包对业务层透明，禁止在业务层使用
- *
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
-public class SignalAttachment implements IAttachment {
-
-    public static final transient short PROTOCOL_ID = 0;
-
-    private static final AtomicInteger ATOMIC_ID = new AtomicInteger(0);
+@Protocol(id = 0)
+@JsonIgnoreProperties("responseFuture")
+public class SignalAttachment {
 
     /**
-     * 唯一标识一个packet， 唯一表示一个Attachment，hashcode() and equals() 也通过signalId计算
+     * EN:Negative signalId are allowed
+     * CN:允许负数的signalId
+     */
+    public static final AtomicInteger ATOMIC_ID = new AtomicInteger(0);
+    /**
+     * 0 for the server, 1 or 2 for the sync or async native client, 12 for the outside client such as browser, mobile
+     */
+    public static final byte SIGNAL_SERVER = 0;
+    public static final byte SIGNAL_NATIVE_ARGUMENT_CLIENT = 1;
+    public static final byte SIGNAL_NATIVE_NO_ARGUMENT_CLIENT = 2;
+    public static final byte SIGNAL_OUTSIDE_CLIENT = 12;
+
+    /**
+     * EN:Unique identification of a packet, unique representation of an attachment, hashcode() and equals() equals signalId value
+     * CN:唯一标识一个packet， 唯一表示一个Attachment，hashcode() and equals() 等于signalId
      */
     private int signalId = ATOMIC_ID.incrementAndGet();
 
     /**
-     * 用来在TaskBus中计算一致性hash的参数
+     * EN:The parameter used to calculate the hash in TaskBus to determine which thread the task is executed on
+     * CN:用来在TaskBus中计算hash的参数，用来决定任务在哪一条线程执行
      */
-    private int executorConsistentHash = -1;
+    private int taskExecutorHash = -1;
+
+    @Note("0 for the server, 1 or 2 for the sync or async native client, 12 for the outside client such as browser, mobile")
+    private byte client = SIGNAL_NATIVE_ARGUMENT_CLIENT;
 
     /**
-     * true为客户端，false为服务端
+     * The timestamp the client sent it
      */
-    private boolean client = true;
+    private long timestamp = TimeUtils.now();
 
     /**
-     * 客户端发送的时间
+     * EN:The method of callback when the client receives a reply from the server
+     * CN:客户端收到服务器回复的时候回调的方法
      */
-    private transient long timestamp = TimeUtils.now();
-
-    /**
-     * 客户端收到服务器回复的时候回调的方法
-     */
-    private transient CompletableFuture<IPacket> responseFuture = new CompletableFuture<>();
+    @JsonIgnore
+    private transient CompletableFuture<Object> responseFuture = new CompletableFuture<>();
 
     public SignalAttachment() {
-    }
-
-
-    @Override
-    public AttachmentType packetType() {
-        return AttachmentType.SIGNAL_PACKET;
-    }
-
-    @Override
-    public int executorConsistentHash() {
-        return executorConsistentHash;
     }
 
     public long getTimestamp() {
@@ -75,11 +77,6 @@ public class SignalAttachment implements IAttachment {
 
     public void setTimestamp(long timestamp) {
         this.timestamp = timestamp;
-    }
-
-    @Override
-    public short protocolId() {
-        return PROTOCOL_ID;
     }
 
 
@@ -108,28 +105,27 @@ public class SignalAttachment implements IAttachment {
         this.signalId = signalId;
     }
 
-    public int getExecutorConsistentHash() {
-        return executorConsistentHash;
+    public int getTaskExecutorHash() {
+        return taskExecutorHash;
     }
 
-    public void setExecutorConsistentHash(int executorConsistentHash) {
-        this.executorConsistentHash = executorConsistentHash;
+    public void setTaskExecutorHash(int taskExecutorHash) {
+        this.taskExecutorHash = taskExecutorHash;
     }
 
-    public boolean isClient() {
+    public byte getClient() {
         return client;
     }
 
-    public void setClient(boolean client) {
+    public void setClient(byte client) {
         this.client = client;
     }
 
-
-    public CompletableFuture<IPacket> getResponseFuture() {
+    public CompletableFuture<Object> getResponseFuture() {
         return responseFuture;
     }
 
-    public void setResponseFuture(CompletableFuture<IPacket> responseFuture) {
+    public void setResponseFuture(CompletableFuture<Object> responseFuture) {
         this.responseFuture = responseFuture;
     }
 }

@@ -21,14 +21,13 @@ import com.zfoo.protocol.util.StringUtils;
 import java.lang.reflect.Field;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public class EnhanceIntSerializer implements IEnhanceSerializer {
 
     @Override
     public void writeObject(StringBuilder builder, String objectStr, Field field, IFieldRegistration fieldRegistration) {
-        if (field.getType().isPrimitive()) {
+        if (isPrimitiveField(field)) {
             builder.append(StringUtils.format("{}.writeInt($1, {});", EnhanceUtils.byteBufUtils, objectStr));
         } else {
             builder.append(StringUtils.format("{}.writeIntBox($1, (Integer){});", EnhanceUtils.byteBufUtils, objectStr));
@@ -38,11 +37,21 @@ public class EnhanceIntSerializer implements IEnhanceSerializer {
     @Override
     public String readObject(StringBuilder builder, Field field, IFieldRegistration fieldRegistration) {
         var result = "result" + GenerateProtocolFile.index.getAndIncrement();
-
-        if (field.getType().isPrimitive()) {
+        if (isPrimitiveField(field)) {
             builder.append(StringUtils.format("int {} = {}.readInt($1);", result, EnhanceUtils.byteBufUtils));
         } else {
             builder.append(StringUtils.format("Integer {} = {}.readIntBox($1);", result, EnhanceUtils.byteBufUtils));
+        }
+        return result;
+    }
+
+    @Override
+    public String defaultValue(StringBuilder builder, Field field, IFieldRegistration fieldRegistration) {
+        var result = "result" + GenerateProtocolFile.index.getAndIncrement();
+        if (isPrimitiveField(field)) {
+            builder.append(StringUtils.format("int {} = 0;", result));
+        } else {
+            builder.append(StringUtils.format("Integer {} = Integer.valueOf(0);", result));
         }
         return result;
     }

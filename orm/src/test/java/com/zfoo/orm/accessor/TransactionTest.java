@@ -27,8 +27,7 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 /**
  * 必须要用复制集群才能使用事务
  *
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 @Ignore
 public class TransactionTest {
@@ -38,7 +37,7 @@ public class TransactionTest {
         var context = new ClassPathXmlApplicationContext("application.xml");
 
         /* Step 1: Start a client session. */
-        var clientSession = OrmContext.getOrmManager().getClientSession();
+        var clientSession = OrmContext.getOrmManager().mongoClient().startSession();
 
         /* Step 2: Optional. Define options to use for the transaction. */
 

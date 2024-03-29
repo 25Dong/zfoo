@@ -14,21 +14,19 @@
 package com.zfoo.net.router.answer;
 
 import com.zfoo.net.router.attachment.SignalAttachment;
-import com.zfoo.protocol.IPacket;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
-public interface ISyncAnswer<T extends IPacket> {
+public interface ISyncAnswer<T> {
 
     /**
-     * @return 请求的返回包
+     * The return packet for the synchronization request
      */
     T packet();
 
     /**
-     * @return 同步和异步控制的附加包
+     * attachment for synchronous and asynchronous request
      */
     SignalAttachment attachment();
 

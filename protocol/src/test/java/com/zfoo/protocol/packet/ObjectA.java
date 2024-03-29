@@ -13,66 +13,26 @@
 
 package com.zfoo.protocol.packet;
 
-import com.zfoo.protocol.IPacket;
+
+import com.zfoo.protocol.anno.Compatible;
+import com.zfoo.protocol.anno.Protocol;
 
 import java.util.Map;
-import java.util.Objects;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
-public class ObjectA implements IPacket {
+@Protocol(id = 102)
+public record ObjectA(
 
-    public static final transient short PROTOCOL_ID = 102;
+        int a,
 
-    private int a;
+        Map<Integer, String> m,
 
-    private Map<Integer, String> m;
+        ObjectB objectB
 
-    private ObjectB objectB;
-
-    @Override
-    public short protocolId() {
-        return PROTOCOL_ID;
-    }
-
-    public int getA() {
-        return a;
-    }
-
-    public void setA(int a) {
-        this.a = a;
-    }
-
-    public Map<Integer, String> getM() {
-        return m;
-    }
-
-    public void setM(Map<Integer, String> m) {
-        this.m = m;
-    }
-
-    public ObjectB getObjectB() {
-        return objectB;
-    }
-
-    public void setObjectB(ObjectB objectB) {
-        this.objectB = objectB;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        ObjectA objectA = (ObjectA) o;
-        return a == objectA.a &&
-                Objects.equals(m, objectA.m) &&
-                Objects.equals(objectB, objectA.objectB);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(a, m, objectB);
-    }
+//  ,
+//        @Compatible(1)
+//        int innerCompatibleValue
+) {
 }

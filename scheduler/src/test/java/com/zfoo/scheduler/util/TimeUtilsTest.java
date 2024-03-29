@@ -13,8 +13,6 @@
 
 package com.zfoo.scheduler.util;
 
-import com.zfoo.util.ThreadUtils;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.time.DayOfWeek;
@@ -25,8 +23,7 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.Date;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public class TimeUtilsTest {
 
@@ -82,15 +79,6 @@ public class TimeUtilsTest {
         LocalDateTime localDateTime = LocalDateTime.of(date, time);
         System.out.println(localDateTime);
         System.out.println("date:" + new Date(java.sql.Timestamp.valueOf(localDateTime).getTime()));
-    }
-
-    @Ignore
-    @Test
-    public void nowTest() {
-        for (int i = 0; i < 100; i++) {
-            System.out.println(TimeUtils.now());
-            ThreadUtils.sleep(1000);
-        }
     }
 
 }

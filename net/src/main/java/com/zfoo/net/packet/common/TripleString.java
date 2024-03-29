@@ -13,15 +13,13 @@
 
 package com.zfoo.net.packet.common;
 
-import com.zfoo.protocol.IPacket;
+import com.zfoo.protocol.anno.Protocol;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
-public class TripleString implements IPacket {
-
-    public static final transient short PROTOCOL_ID = 115;
+@Protocol(id = 115)
+public class TripleString {
 
     private String left;
     private String middle;
@@ -33,11 +31,6 @@ public class TripleString implements IPacket {
         triple.middle = middle;
         triple.right = right;
         return triple;
-    }
-
-    @Override
-    public short protocolId() {
-        return PROTOCOL_ID;
     }
 
     public String getLeft() {

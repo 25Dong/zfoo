@@ -12,14 +12,14 @@
 
 package com.zfoo.protocol.buffer;
 
-import com.zfoo.protocol.IPacket;
-import com.zfoo.protocol.collection.ArrayUtils;
-import com.zfoo.protocol.collection.CollectionUtils;
+import com.zfoo.protocol.collection.*;
 import com.zfoo.protocol.registration.IProtocolRegistration;
 import com.zfoo.protocol.util.StringUtils;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.util.ReferenceCountUtil;
+import io.netty.util.collection.IntObjectHashMap;
+import io.netty.util.collection.LongObjectHashMap;
 
 import java.util.Collection;
 import java.util.List;
@@ -27,15 +27,48 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * “可变长字节码算法”的压缩数据的算法，以达到压缩数据，减少磁盘IO。
+ * zfoo的自定义私有协议格式，可以非常方便的对大部分数据定制序列化和反序列化实现，可以对大部分数据结构定制高性能实现方式
  * <p>
- * google的ProtocolBuffer和Facebook的thrift底层的通信协议都是由这个算法实现
+ * “可变长字节码算法”的压缩数据的算法，压缩数据和减少磁盘IO。google的ProtocolBuf和Facebook的thrift底层的通信协议都是由这个算法实现
  *
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public abstract class ByteBufUtils {
 
+    //---------------------------------compatible--------------------------------------
+    public static final Double ZERO_DOUBLE = Double.valueOf(0D);
+    public static final Float ZERO_FLOAT = Float.valueOf(0F);
+
+    public static void adjustPadding(ByteBuf byteBuf, int predictionLength, int beforeWriteIndex) {
+        // 因为写入的是可变长的int，如果预留的位置过多，则清除多余的位置
+        var currentWriteIndex = byteBuf.writerIndex();
+        var predictionCount = writeIntCount(predictionLength);
+        var length = currentWriteIndex - beforeWriteIndex - predictionCount;
+        var lengthCount = writeIntCount(length);
+        var padding = lengthCount - predictionCount;
+        if (padding == 0) {
+            byteBuf.writerIndex(beforeWriteIndex);
+            writeInt(byteBuf, length);
+            byteBuf.writerIndex(currentWriteIndex);
+        } else if (padding < 0) {
+            var retainedByteBuf = byteBuf.retainedSlice(currentWriteIndex - length, length);
+            byteBuf.writerIndex(beforeWriteIndex);
+            writeInt(byteBuf, length);
+            byteBuf.writeBytes(retainedByteBuf);
+            ReferenceCountUtil.release(retainedByteBuf);
+        } else {
+            var retainedByteBuf = byteBuf.retainedSlice(currentWriteIndex - length, length);
+            var bytes = readAllBytes(retainedByteBuf);
+            byteBuf.writerIndex(beforeWriteIndex);
+            writeInt(byteBuf, length);
+            byteBuf.writeBytes(bytes);
+            ReferenceCountUtil.release(retainedByteBuf);
+        }
+    }
+
+    public static boolean compatibleRead(ByteBuf byteBuf, int beforeReadIndex, int length) {
+        return length != -1 && byteBuf.readerIndex() < length + beforeReadIndex;
+    }
 
     //---------------------------------boolean--------------------------------------
     public static void writeBoolean(ByteBuf byteBuf, boolean value) {
@@ -169,7 +202,7 @@ public abstract class ByteBufUtils {
     }
 
 
-    private static int writeIntCount(int value) {
+    public static int writeIntCount(int value) {
         value = (value << 1) ^ (value >> 31);
 
         if (value >>> 7 == 0) {
@@ -344,6 +377,7 @@ public abstract class ByteBufUtils {
         }
 
         // 预估需要写入的字节数，并预留位置
+        var beforeWriteIndex = byteBuf.writerIndex();
         var maxLength = ByteBufUtil.utf8MaxBytes(value);
         var writeIntCountByte = writeInt(byteBuf, maxLength);
 
@@ -354,12 +388,12 @@ public abstract class ByteBufUtils {
         // 因为写入的是可变长的int，如果预留的位置过多，则清除多余的位置
         var padding = writeIntCountByte - writeIntCount(length);
         if (padding == 0) {
-            byteBuf.writerIndex(currentWriteIndex - length - writeIntCountByte);
+            byteBuf.writerIndex(beforeWriteIndex);
             writeInt(byteBuf, length);
             byteBuf.writerIndex(currentWriteIndex);
         } else {
             var retainedByteBuf = byteBuf.retainedSlice(currentWriteIndex - length, length);
-            byteBuf.writerIndex(currentWriteIndex - length - writeIntCountByte);
+            byteBuf.writerIndex(beforeWriteIndex);
             writeInt(byteBuf, length);
             byteBuf.writeBytes(retainedByteBuf);
             ReferenceCountUtil.release(retainedByteBuf);
@@ -372,37 +406,9 @@ public abstract class ByteBufUtils {
     }
 
 
-    //---------------------------------char--------------------------------------
-    // 很多脚本语言没有char，所以这里使用string代替
-    public static void writeChar(ByteBuf byteBuf, char value) {
-        writeString(byteBuf, String.valueOf(value));
-    }
-
-    public static char readChar(ByteBuf byteBuf) {
-        var value = readString(byteBuf);
-        if (StringUtils.isEmpty(value)) {
-            return Character.MIN_VALUE;
-        }
-        return value.charAt(0);
-    }
-
-    public static void writeCharBox(ByteBuf byteBuf, Character value) {
-        writeChar(byteBuf, value == null ? Character.MIN_VALUE : value);
-    }
-
-    public static Character readCharBox(ByteBuf byteBuf) {
-        return readChar(byteBuf);
-    }
-
     //-----------------------------------------------------------------------
     //---------------------------------以下方法会被字节码生成的代码调用--------------------------------------
-    public static boolean writePacketFlag(ByteBuf byteBuf, IPacket packet) {
-        boolean flag = packet == null;
-        byteBuf.writeBoolean(!flag);
-        return flag;
-    }
-
-    public static void writePacketCollection(ByteBuf byteBuf, Collection<? extends IPacket> collection, IProtocolRegistration protocolRegistration) {
+    public static void writePacketCollection(ByteBuf byteBuf, Collection<?> collection, IProtocolRegistration protocolRegistration) {
         if (collection == null) {
             byteBuf.writeByte(0);
             return;
@@ -413,28 +419,28 @@ public abstract class ByteBufUtils {
         }
     }
 
-    public static void writePacketList(ByteBuf byteBuf, List<? extends IPacket> list, IProtocolRegistration protocolRegistration) {
+    public static void writePacketList(ByteBuf byteBuf, List<?> list, IProtocolRegistration protocolRegistration) {
         writePacketCollection(byteBuf, list, protocolRegistration);
     }
 
-    public static List<IPacket> readPacketList(ByteBuf byteBuf, IProtocolRegistration protocolRegistration) {
+    public static List<?> readPacketList(ByteBuf byteBuf, IProtocolRegistration protocolRegistration) {
         var length = readInt(byteBuf);
-        var list = (List<IPacket>) CollectionUtils.newFixedList(length);
+        List<Object> list = CollectionUtils.newList(length);
         for (var i = 0; i < length; i++) {
-            list.add((IPacket) protocolRegistration.read(byteBuf));
+            list.add(protocolRegistration.read(byteBuf));
         }
         return list;
     }
 
-    public static void writePacketSet(ByteBuf byteBuf, Set<? extends IPacket> list, IProtocolRegistration protocolRegistration) {
-        writePacketCollection(byteBuf, list, protocolRegistration);
+    public static void writePacketSet(ByteBuf byteBuf, Set<?> set, IProtocolRegistration protocolRegistration) {
+        writePacketCollection(byteBuf, set, protocolRegistration);
     }
 
-    public static Set<IPacket> readPacketSet(ByteBuf byteBuf, IProtocolRegistration protocolRegistration) {
+    public static Set<?> readPacketSet(ByteBuf byteBuf, IProtocolRegistration protocolRegistration) {
         var length = readInt(byteBuf);
-        var set = (Set<IPacket>) CollectionUtils.newFixedSet(length);
+        Set<Object> set = CollectionUtils.newSet(length);
         for (var i = 0; i < length; i++) {
-            set.add((IPacket) protocolRegistration.read(byteBuf));
+            set.add(protocolRegistration.read(byteBuf));
         }
         return set;
     }
@@ -453,9 +459,9 @@ public abstract class ByteBufUtils {
 
     public static Map<Integer, Integer> readIntIntMap(ByteBuf byteBuf) {
         var length = readInt(byteBuf);
-        var map = (Map<Integer, Integer>) CollectionUtils.newFixedMap(length);
+        var map = new HashMapIntInt(CollectionUtils.comfortableCapacity(length));
         for (var i = 0; i < length; i++) {
-            map.put(readIntBox(byteBuf), readIntBox(byteBuf));
+            map.putPrimitive(readInt(byteBuf), readInt(byteBuf));
         }
         return map;
     }
@@ -474,9 +480,9 @@ public abstract class ByteBufUtils {
 
     public static Map<Integer, Long> readIntLongMap(ByteBuf byteBuf) {
         var length = readInt(byteBuf);
-        var map = (Map<Integer, Long>) CollectionUtils.newFixedMap(length);
+        var map = new HashMapIntLong(CollectionUtils.comfortableCapacity(length));
         for (var i = 0; i < length; i++) {
-            map.put(readIntBox(byteBuf), readLongBox(byteBuf));
+            map.putPrimitive(readInt(byteBuf), readLong(byteBuf));
         }
         return map;
     }
@@ -495,14 +501,14 @@ public abstract class ByteBufUtils {
 
     public static Map<Integer, String> readIntStringMap(ByteBuf byteBuf) {
         var length = readInt(byteBuf);
-        var map = (Map<Integer, String>) CollectionUtils.newFixedMap(length);
+        var map = new IntObjectHashMap<String>(CollectionUtils.comfortableCapacity(length));
         for (var i = 0; i < length; i++) {
-            map.put(readIntBox(byteBuf), readString(byteBuf));
+            map.put(readInt(byteBuf), readString(byteBuf));
         }
         return map;
     }
 
-    public static void writeIntPacketMap(ByteBuf byteBuf, Map<Integer, ? extends IPacket> map, IProtocolRegistration protocolRegistration) {
+    public static void writeIntPacketMap(ByteBuf byteBuf, Map<Integer, ?> map, IProtocolRegistration protocolRegistration) {
         if (map == null) {
             byteBuf.writeByte(0);
             return;
@@ -514,11 +520,11 @@ public abstract class ByteBufUtils {
         }
     }
 
-    public static Map<Integer, IPacket> readIntPacketMap(ByteBuf byteBuf, IProtocolRegistration protocolRegistration) {
+    public static Map<Integer, ?> readIntPacketMap(ByteBuf byteBuf, IProtocolRegistration protocolRegistration) {
         var length = readInt(byteBuf);
-        var map = (Map<Integer, IPacket>) CollectionUtils.newFixedMap(length);
+        var map = new IntObjectHashMap<>(CollectionUtils.comfortableCapacity(length));
         for (var i = 0; i < length; i++) {
-            map.put(readIntBox(byteBuf), (IPacket) protocolRegistration.read(byteBuf));
+            map.put(readInt(byteBuf), protocolRegistration.read(byteBuf));
         }
         return map;
     }
@@ -537,9 +543,9 @@ public abstract class ByteBufUtils {
 
     public static Map<Long, Integer> readLongIntMap(ByteBuf byteBuf) {
         var length = readInt(byteBuf);
-        var map = (Map<Long, Integer>) CollectionUtils.newFixedMap(length);
+        var map = new HashMapLongInt(CollectionUtils.comfortableCapacity(length));
         for (var i = 0; i < length; i++) {
-            map.put(readLongBox(byteBuf), readIntBox(byteBuf));
+            map.putPrimitive(readLong(byteBuf), readInt(byteBuf));
         }
         return map;
     }
@@ -558,9 +564,9 @@ public abstract class ByteBufUtils {
 
     public static Map<Long, Long> readLongLongMap(ByteBuf byteBuf) {
         var length = readInt(byteBuf);
-        var map = (Map<Long, Long>) CollectionUtils.newFixedMap(length);
+        var map = new HashMapLongLong(CollectionUtils.comfortableCapacity(length));
         for (var i = 0; i < length; i++) {
-            map.put(readLongBox(byteBuf), readLongBox(byteBuf));
+            map.putPrimitive(readLong(byteBuf), readLong(byteBuf));
         }
         return map;
     }
@@ -579,14 +585,14 @@ public abstract class ByteBufUtils {
 
     public static Map<Long, String> readLongStringMap(ByteBuf byteBuf) {
         var length = readInt(byteBuf);
-        var map = (Map<Long, String>) CollectionUtils.newFixedMap(length);
+        var map = new LongObjectHashMap<String>(CollectionUtils.comfortableCapacity(length));
         for (var i = 0; i < length; i++) {
-            map.put(readLongBox(byteBuf), readString(byteBuf));
+            map.put(readLong(byteBuf), readString(byteBuf));
         }
         return map;
     }
 
-    public static void writeLongPacketMap(ByteBuf byteBuf, Map<Long, ? extends IPacket> map, IProtocolRegistration protocolRegistration) {
+    public static void writeLongPacketMap(ByteBuf byteBuf, Map<Long, ?> map, IProtocolRegistration protocolRegistration) {
         if (map == null) {
             byteBuf.writeByte(0);
             return;
@@ -598,11 +604,11 @@ public abstract class ByteBufUtils {
         }
     }
 
-    public static Map<Long, IPacket> readLongPacketMap(ByteBuf byteBuf, IProtocolRegistration protocolRegistration) {
+    public static Map<Long, ?> readLongPacketMap(ByteBuf byteBuf, IProtocolRegistration protocolRegistration) {
         var length = readInt(byteBuf);
-        var map = (Map<Long, IPacket>) CollectionUtils.newFixedMap(length);
+        var map = new LongObjectHashMap<>(CollectionUtils.comfortableCapacity(length));
         for (var i = 0; i < length; i++) {
-            map.put(readLongBox(byteBuf), (IPacket) protocolRegistration.read(byteBuf));
+            map.put(readLong(byteBuf), protocolRegistration.read(byteBuf));
         }
         return map;
     }
@@ -621,7 +627,7 @@ public abstract class ByteBufUtils {
 
     public static Map<String, Integer> readStringIntMap(ByteBuf byteBuf) {
         var length = readInt(byteBuf);
-        var map = (Map<String, Integer>) CollectionUtils.newFixedMap(length);
+        Map<String, Integer> map = CollectionUtils.newMap(length);
         for (var i = 0; i < length; i++) {
             map.put(readString(byteBuf), readIntBox(byteBuf));
         }
@@ -642,7 +648,7 @@ public abstract class ByteBufUtils {
 
     public static Map<String, Long> readStringLongMap(ByteBuf byteBuf) {
         var length = readInt(byteBuf);
-        var map = (Map<String, Long>) CollectionUtils.newFixedMap(length);
+        Map<String, Long> map = CollectionUtils.newMap(length);
         for (var i = 0; i < length; i++) {
             map.put(readString(byteBuf), readLongBox(byteBuf));
         }
@@ -663,14 +669,14 @@ public abstract class ByteBufUtils {
 
     public static Map<String, String> readStringStringMap(ByteBuf byteBuf) {
         var length = readInt(byteBuf);
-        var map = (Map<String, String>) CollectionUtils.newFixedMap(length);
+        Map<String, String> map = CollectionUtils.newMap(length);
         for (var i = 0; i < length; i++) {
             map.put(readString(byteBuf), readString(byteBuf));
         }
         return map;
     }
 
-    public static void writeStringPacketMap(ByteBuf byteBuf, Map<String, ? extends IPacket> map, IProtocolRegistration protocolRegistration) {
+    public static void writeStringPacketMap(ByteBuf byteBuf, Map<String, ?> map, IProtocolRegistration protocolRegistration) {
         if (map == null) {
             byteBuf.writeByte(0);
             return;
@@ -682,11 +688,11 @@ public abstract class ByteBufUtils {
         }
     }
 
-    public static Map<String, IPacket> readStringPacketMap(ByteBuf byteBuf, IProtocolRegistration protocolRegistration) {
+    public static Map<String, ?> readStringPacketMap(ByteBuf byteBuf, IProtocolRegistration protocolRegistration) {
         var length = readInt(byteBuf);
-        var map = (Map<String, IPacket>) CollectionUtils.newFixedMap(length);
+        Map<String, Object> map = CollectionUtils.newMap(length);
         for (var i = 0; i < length; i++) {
-            map.put(readString(byteBuf), (IPacket) protocolRegistration.read(byteBuf));
+            map.put(readString(byteBuf), protocolRegistration.read(byteBuf));
         }
         return map;
     }
@@ -708,7 +714,7 @@ public abstract class ByteBufUtils {
 
     public static boolean[] readBooleanArray(ByteBuf byteBuf) {
         var length = readInt(byteBuf);
-        var bytes = new byte[length];
+        var bytes = new byte[CollectionUtils.comfortableByteLength(length)];
         var array = new boolean[length];
         byteBuf.readBytes(bytes);
         for (var i = 0; i < length; i++) {
@@ -730,7 +736,7 @@ public abstract class ByteBufUtils {
 
     public static Boolean[] readBooleanBoxArray(ByteBuf byteBuf) {
         var length = readInt(byteBuf);
-        var array = new Boolean[length];
+        var array = new Boolean[CollectionUtils.comfortableByteLength(length)];
         for (var i = 0; i < length; i++) {
             array[i] = readBooleanBox(byteBuf);
         }
@@ -753,12 +759,7 @@ public abstract class ByteBufUtils {
     }
 
     public static List<Boolean> readBooleanList(ByteBuf byteBuf) {
-        var length = readInt(byteBuf);
-        var list = (List<Boolean>) CollectionUtils.newFixedList(length);
-        for (var i = 0; i < length; i++) {
-            list.add(readBooleanBox(byteBuf));
-        }
-        return list;
+        return new ArrayListBoolean(readBooleanArray(byteBuf));
     }
 
     public static void writeBooleanSet(ByteBuf byteBuf, Set<Boolean> set) {
@@ -767,7 +768,7 @@ public abstract class ByteBufUtils {
 
     public static Set<Boolean> readBooleanSet(ByteBuf byteBuf) {
         var length = readInt(byteBuf);
-        var set = (Set<Boolean>) CollectionUtils.newFixedSet(length);
+        Set<Boolean> set = CollectionUtils.newSet(length);
         for (var i = 0; i < length; i++) {
             set.add(readBooleanBox(byteBuf));
         }
@@ -790,7 +791,7 @@ public abstract class ByteBufUtils {
             return ArrayUtils.EMPTY_BYTE_ARRAY;
         }
 
-        var bytes = new byte[length];
+        var bytes = new byte[CollectionUtils.comfortableByteLength(length)];
         byteBuf.readBytes(bytes);
         return bytes;
     }
@@ -808,7 +809,7 @@ public abstract class ByteBufUtils {
 
     public static Byte[] readByteBoxArray(ByteBuf byteBuf) {
         var length = readInt(byteBuf);
-        var bytesBox = new Byte[length];
+        var bytesBox = new Byte[CollectionUtils.comfortableByteLength(length)];
         for (var i = 0; i < length; i++) {
             bytesBox[i] = readByteBox(byteBuf);
         }
@@ -831,12 +832,7 @@ public abstract class ByteBufUtils {
     }
 
     public static List<Byte> readByteList(ByteBuf byteBuf) {
-        var length = readInt(byteBuf);
-        var list = (List<Byte>) CollectionUtils.newFixedList(length);
-        for (var i = 0; i < length; i++) {
-            list.add(readByteBox(byteBuf));
-        }
-        return list;
+        return new ArrayListByte(readByteArray(byteBuf));
     }
 
     public static void writeByteSet(ByteBuf byteBuf, Set<Byte> set) {
@@ -845,9 +841,9 @@ public abstract class ByteBufUtils {
 
     public static Set<Byte> readByteSet(ByteBuf byteBuf) {
         var length = readInt(byteBuf);
-        var set = (Set<Byte>) CollectionUtils.newFixedSet(length);
+        var set = new HashSetByte(CollectionUtils.comfortableCapacity(length));
         for (var i = 0; i < length; i++) {
-            set.add(readByteBox(byteBuf));
+            set.add(readByte(byteBuf));
         }
         return set;
     }
@@ -871,7 +867,7 @@ public abstract class ByteBufUtils {
 
     public static short[] readShortArray(ByteBuf byteBuf) {
         var length = readInt(byteBuf);
-        var shorts = new short[length];
+        var shorts = new short[CollectionUtils.comfortableShortLength(length)];
         var readIndex = byteBuf.readerIndex();
         for (var i = 0; i < length; i++) {
             shorts[i] = byteBuf.getShort(readIndex);
@@ -894,7 +890,7 @@ public abstract class ByteBufUtils {
 
     public static Short[] readShortBoxArray(ByteBuf byteBuf) {
         var length = readInt(byteBuf);
-        var shorts = new Short[length];
+        var shorts = new Short[CollectionUtils.comfortableShortLength(length)];
         for (var i = 0; i < length; i++) {
             shorts[i] = readShortBox(byteBuf);
         }
@@ -917,12 +913,7 @@ public abstract class ByteBufUtils {
     }
 
     public static List<Short> readShortList(ByteBuf byteBuf) {
-        var length = readInt(byteBuf);
-        var list = (List<Short>) CollectionUtils.newFixedList(length);
-        for (var i = 0; i < length; i++) {
-            list.add(readShortBox(byteBuf));
-        }
-        return list;
+        return new ArrayListShort(readShortArray(byteBuf));
     }
 
     public static void writeShortSet(ByteBuf byteBuf, Set<Short> set) {
@@ -931,9 +922,9 @@ public abstract class ByteBufUtils {
 
     public static Set<Short> readShortSet(ByteBuf byteBuf) {
         var length = readInt(byteBuf);
-        var set = (Set<Short>) CollectionUtils.newFixedSet(length);
+        var set = new HashSetShort(CollectionUtils.comfortableCapacity(length));
         for (var i = 0; i < length; i++) {
-            set.add(readShortBox(byteBuf));
+            set.add(readShort(byteBuf));
         }
         return set;
     }
@@ -953,7 +944,7 @@ public abstract class ByteBufUtils {
 
     public static int[] readIntArray(ByteBuf byteBuf) {
         var length = readInt(byteBuf);
-        var ints = new int[length];
+        var ints = new int[CollectionUtils.comfortableIntLength(length)];
         for (var i = 0; i < length; i++) {
             ints[i] = readInt(byteBuf);
         }
@@ -973,7 +964,7 @@ public abstract class ByteBufUtils {
 
     public static Integer[] readIntBoxArray(ByteBuf byteBuf) {
         var length = readInt(byteBuf);
-        var ints = new Integer[length];
+        var ints = new Integer[CollectionUtils.comfortableIntLength(length)];
         for (var i = 0; i < length; i++) {
             ints[i] = readIntBox(byteBuf);
         }
@@ -996,12 +987,7 @@ public abstract class ByteBufUtils {
     }
 
     public static List<Integer> readIntList(ByteBuf byteBuf) {
-        var length = readInt(byteBuf);
-        var list = (List<Integer>) CollectionUtils.newFixedList(length);
-        for (var i = 0; i < length; i++) {
-            list.add(readIntBox(byteBuf));
-        }
-        return list;
+        return new ArrayListInt(readIntArray(byteBuf));
     }
 
     public static void writeIntSet(ByteBuf byteBuf, Set<Integer> set) {
@@ -1010,9 +996,9 @@ public abstract class ByteBufUtils {
 
     public static Set<Integer> readIntSet(ByteBuf byteBuf) {
         var length = readInt(byteBuf);
-        var set = (Set<Integer>) CollectionUtils.newFixedSet(length);
+        var set = new HashSetInt(CollectionUtils.comfortableCapacity(length));
         for (var i = 0; i < length; i++) {
-            set.add(readIntBox(byteBuf));
+            set.add(readInt(byteBuf));
         }
         return set;
     }
@@ -1032,7 +1018,7 @@ public abstract class ByteBufUtils {
 
     public static long[] readLongArray(ByteBuf byteBuf) {
         var length = readInt(byteBuf);
-        var longs = new long[length];
+        var longs = new long[CollectionUtils.comfortableLongLength(length)];
         for (var i = 0; i < length; i++) {
             longs[i] = readLong(byteBuf);
         }
@@ -1052,7 +1038,7 @@ public abstract class ByteBufUtils {
 
     public static Long[] readLongBoxArray(ByteBuf byteBuf) {
         var length = readInt(byteBuf);
-        var longs = new Long[length];
+        var longs = new Long[CollectionUtils.comfortableLongLength(length)];
         for (var i = 0; i < length; i++) {
             longs[i] = readLongBox(byteBuf);
         }
@@ -1075,12 +1061,7 @@ public abstract class ByteBufUtils {
     }
 
     public static List<Long> readLongList(ByteBuf byteBuf) {
-        var length = readInt(byteBuf);
-        var list = (List<Long>) CollectionUtils.newFixedList(length);
-        for (var i = 0; i < length; i++) {
-            list.add(readLongBox(byteBuf));
-        }
-        return list;
+        return new ArrayListLong(readLongArray(byteBuf));
     }
 
     public static void writeLongSet(ByteBuf byteBuf, Set<Long> set) {
@@ -1089,9 +1070,9 @@ public abstract class ByteBufUtils {
 
     public static Set<Long> readLongSet(ByteBuf byteBuf) {
         var length = readInt(byteBuf);
-        var set = (Set<Long>) CollectionUtils.newFixedSet(length);
+        var set = new HashSetLong(CollectionUtils.comfortableCapacity(length));
         for (var i = 0; i < length; i++) {
-            set.add(readLongBox(byteBuf));
+            set.add(readLong(byteBuf));
         }
         return set;
     }
@@ -1115,7 +1096,7 @@ public abstract class ByteBufUtils {
 
     public static float[] readFloatArray(ByteBuf byteBuf) {
         var length = readInt(byteBuf);
-        var floats = new float[length];
+        var floats = new float[CollectionUtils.comfortableIntLength(length)];
         var readIndex = byteBuf.readerIndex();
         for (var i = 0; i < length; i++) {
             floats[i] = byteBuf.getFloat(readIndex);
@@ -1138,7 +1119,7 @@ public abstract class ByteBufUtils {
 
     public static Float[] readFloatBoxArray(ByteBuf byteBuf) {
         var length = readInt(byteBuf);
-        var floats = new Float[length];
+        var floats = new Float[CollectionUtils.comfortableIntLength(length)];
         for (var i = 0; i < length; i++) {
             floats[i] = readFloatBox(byteBuf);
         }
@@ -1161,12 +1142,7 @@ public abstract class ByteBufUtils {
     }
 
     public static List<Float> readFloatList(ByteBuf byteBuf) {
-        var length = readInt(byteBuf);
-        var list = (List<Float>) CollectionUtils.newFixedList(length);
-        for (var i = 0; i < length; i++) {
-            list.add(readFloatBox(byteBuf));
-        }
-        return list;
+        return new ArrayListFloat(readFloatArray(byteBuf));
     }
 
     public static void writeFloatSet(ByteBuf byteBuf, Set<Float> set) {
@@ -1175,7 +1151,7 @@ public abstract class ByteBufUtils {
 
     public static Set<Float> readFloatSet(ByteBuf byteBuf) {
         var length = readInt(byteBuf);
-        var set = (Set<Float>) CollectionUtils.newFixedSet(length);
+        Set<Float> set = CollectionUtils.newSet(length);
         for (var i = 0; i < length; i++) {
             set.add(readFloatBox(byteBuf));
         }
@@ -1201,7 +1177,7 @@ public abstract class ByteBufUtils {
 
     public static double[] readDoubleArray(ByteBuf byteBuf) {
         var length = readInt(byteBuf);
-        var doubles = new double[length];
+        var doubles = new double[CollectionUtils.comfortableLongLength(length)];
         var readIndex = byteBuf.readerIndex();
         for (var i = 0; i < length; i++) {
             doubles[i] = byteBuf.getDouble(readIndex);
@@ -1224,7 +1200,7 @@ public abstract class ByteBufUtils {
 
     public static Double[] readDoubleBoxArray(ByteBuf byteBuf) {
         var length = readInt(byteBuf);
-        var doubles = new Double[length];
+        var doubles = new Double[CollectionUtils.comfortableLongLength(length)];
         for (var i = 0; i < length; i++) {
             doubles[i] = readDoubleBox(byteBuf);
         }
@@ -1247,12 +1223,7 @@ public abstract class ByteBufUtils {
     }
 
     public static List<Double> readDoubleList(ByteBuf byteBuf) {
-        var length = readInt(byteBuf);
-        var list = (List<Double>) CollectionUtils.newFixedList(length);
-        for (var i = 0; i < length; i++) {
-            list.add(readDoubleBox(byteBuf));
-        }
-        return list;
+        return new ArrayListDouble(readDoubleArray(byteBuf));
     }
 
     public static void writeDoubleSet(ByteBuf byteBuf, Set<Double> set) {
@@ -1261,7 +1232,7 @@ public abstract class ByteBufUtils {
 
     public static Set<Double> readDoubleSet(ByteBuf byteBuf) {
         var length = readInt(byteBuf);
-        var set = (Set<Double>) CollectionUtils.newFixedSet(length);
+        Set<Double> set = CollectionUtils.newSet(length);
         for (var i = 0; i < length; i++) {
             set.add(readDoubleBox(byteBuf));
         }
@@ -1282,7 +1253,7 @@ public abstract class ByteBufUtils {
 
     public static String[] readStringArray(ByteBuf byteBuf) {
         var length = readInt(byteBuf);
-        var strings = new String[length];
+        var strings = new String[CollectionUtils.comfortableObjectLength(length)];
         for (var i = 0; i < length; i++) {
             strings[i] = readString(byteBuf);
         }
@@ -1306,7 +1277,7 @@ public abstract class ByteBufUtils {
 
     public static List<String> readStringList(ByteBuf byteBuf) {
         var length = readInt(byteBuf);
-        var list = (List<String>) CollectionUtils.newFixedList(length);
+        List<String> list = CollectionUtils.newList(length);
         for (var i = 0; i < length; i++) {
             list.add(readString(byteBuf));
         }
@@ -1319,56 +1290,14 @@ public abstract class ByteBufUtils {
 
     public static Set<String> readStringSet(ByteBuf byteBuf) {
         var length = readInt(byteBuf);
-        var set = (Set<String>) CollectionUtils.newFixedSet(length);
+        Set<String> set = CollectionUtils.newSet(length);
         for (var i = 0; i < length; i++) {
             set.add(readString(byteBuf));
         }
         return set;
     }
 
-
-    //---------------------------------char--------------------------------------
-    public static void writeCharArray(ByteBuf byteBuf, char[] array) {
-        if (array == null) {
-            byteBuf.writeByte(0);
-            return;
-        }
-        writeInt(byteBuf, array.length);
-        for (var value : array) {
-            writeChar(byteBuf, value);
-        }
-    }
-
-    public static char[] readCharArray(ByteBuf byteBuf) {
-        var length = readInt(byteBuf);
-        var chars = new char[length];
-        for (var i = 0; i < length; i++) {
-            chars[i] = readChar(byteBuf);
-        }
-        return chars;
-    }
-
-    public static void writeCharBoxArray(ByteBuf byteBuf, Character[] array) {
-        if (array == null) {
-            byteBuf.writeByte(0);
-            return;
-        }
-        writeInt(byteBuf, array.length);
-        for (var value : array) {
-            writeCharBox(byteBuf, value);
-        }
-    }
-
-    public static Character[] readCharBoxArray(ByteBuf byteBuf) {
-        var length = readInt(byteBuf);
-        var chars = new Character[length];
-        for (var i = 0; i < length; i++) {
-            chars[i] = readCharBox(byteBuf);
-        }
-        return chars;
-    }
-
-    public static <T extends IPacket> void writePacketArray(ByteBuf byteBuf, T[] array, IProtocolRegistration protocolRegistration) {
+    public static <T> void writePacketArray(ByteBuf byteBuf, T[] array, IProtocolRegistration protocolRegistration) {
         if (array == null) {
             byteBuf.writeByte(0);
             return;

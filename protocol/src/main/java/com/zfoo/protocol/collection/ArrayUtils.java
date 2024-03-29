@@ -17,12 +17,10 @@ import com.zfoo.protocol.util.AssertionUtils;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public abstract class ArrayUtils {
 
@@ -35,6 +33,40 @@ public abstract class ArrayUtils {
     public static final double[] EMPTY_DOUBLE_ARRAY = new double[0];
     public static final char[] EMPTY_CHAR_ARRAY = new char[0];
 
+    /**
+     * unbox
+     */
+    public static boolean booleanValue(Boolean value) {
+        return value != null && value;
+    }
+
+    public static byte byteValue(Number value) {
+        return value == null ? 0 : value.byteValue();
+    }
+
+    public static short shortValue(Number value) {
+        return value == null ? 0 : value.shortValue();
+    }
+
+    public static int intValue(Number value) {
+        return value == null ? 0 : value.intValue();
+    }
+
+    public static long longValue(Number value) {
+        return value == null ? 0 : value.longValue();
+    }
+
+    public static float floatValue(Number value) {
+        return value == null ? 0 : value.floatValue();
+    }
+
+    public static double doubleValue(Number value) {
+        return value == null ? 0 : value.doubleValue();
+    }
+
+    public static char charValue(Character value) {
+        return value == null ? Character.MIN_VALUE : value;
+    }
 
     /**
      * length
@@ -158,9 +190,6 @@ public abstract class ArrayUtils {
      * toList
      */
     public static List<Boolean> toList(boolean[] array) {
-        if (isEmpty(array)) {
-            return Collections.emptyList();
-        }
         var list = new ArrayList<Boolean>();
         for (var value : array) {
             list.add(value);
@@ -169,9 +198,6 @@ public abstract class ArrayUtils {
     }
 
     public static List<Byte> toList(byte[] array) {
-        if (isEmpty(array)) {
-            return Collections.emptyList();
-        }
         var list = new ArrayList<Byte>();
         for (var value : array) {
             list.add(value);
@@ -180,9 +206,6 @@ public abstract class ArrayUtils {
     }
 
     public static List<Short> toList(short[] array) {
-        if (isEmpty(array)) {
-            return Collections.emptyList();
-        }
         var list = new ArrayList<Short>();
         for (var value : array) {
             list.add(value);
@@ -191,9 +214,6 @@ public abstract class ArrayUtils {
     }
 
     public static List<Integer> toList(int[] array) {
-        if (isEmpty(array)) {
-            return Collections.emptyList();
-        }
         var list = new ArrayList<Integer>();
         for (var j : array) {
             list.add(j);
@@ -202,9 +222,6 @@ public abstract class ArrayUtils {
     }
 
     public static List<Long> toList(long[] array) {
-        if (isEmpty(array)) {
-            return Collections.emptyList();
-        }
         var list = new ArrayList<Long>();
         for (var j : array) {
             list.add(j);
@@ -213,9 +230,6 @@ public abstract class ArrayUtils {
     }
 
     public static List<Float> toList(float[] array) {
-        if (isEmpty(array)) {
-            return Collections.emptyList();
-        }
         var list = new ArrayList<Float>();
         for (var j : array) {
             list.add(j);
@@ -224,9 +238,6 @@ public abstract class ArrayUtils {
     }
 
     public static List<Double> toList(double[] array) {
-        if (isEmpty(array)) {
-            return Collections.emptyList();
-        }
         var list = new ArrayList<Double>();
         for (var j : array) {
             list.add(j);
@@ -235,9 +246,6 @@ public abstract class ArrayUtils {
     }
 
     public static List<Character> toList(char[] array) {
-        if (isEmpty(array)) {
-            return Collections.emptyList();
-        }
         var list = new ArrayList<Character>();
         for (var j : array) {
             list.add(j);
@@ -247,9 +255,9 @@ public abstract class ArrayUtils {
 
     public static <T> List<T> toList(T[] array) {
         if (isEmpty(array)) {
-            return Collections.emptyList();
+            return CollectionUtils.emptyList();
         }
-        return Arrays.asList(array);
+        return new ArrayList<>(Arrays.asList(array));
     }
 
 
@@ -263,7 +271,7 @@ public abstract class ArrayUtils {
         var size = list.size();
         var array = new boolean[size];
         for (var i = 0; i < size; i++) {
-            array[i] = list.get(i);
+            array[i] = booleanValue(list.get(i));
         }
         return array;
     }
@@ -275,7 +283,7 @@ public abstract class ArrayUtils {
         var size = list.size();
         var array = new byte[size];
         for (var i = 0; i < size; i++) {
-            array[i] = list.get(i);
+            array[i] = byteValue(list.get(i));
         }
         return array;
     }
@@ -287,7 +295,7 @@ public abstract class ArrayUtils {
         var size = list.size();
         var array = new short[size];
         for (var i = 0; i < size; i++) {
-            array[i] = list.get(i);
+            array[i] = shortValue(list.get(i));
         }
         return array;
     }
@@ -299,7 +307,7 @@ public abstract class ArrayUtils {
         var size = list.size();
         var array = new int[size];
         for (var i = 0; i < size; i++) {
-            array[i] = list.get(i);
+            array[i] = intValue(list.get(i));
         }
         return array;
     }
@@ -312,7 +320,7 @@ public abstract class ArrayUtils {
         var size = list.size();
         var array = new long[size];
         for (var i = 0; i < size; i++) {
-            array[i] = list.get(i);
+            array[i] = longValue(list.get(i));
         }
         return array;
     }
@@ -324,7 +332,7 @@ public abstract class ArrayUtils {
         var size = list.size();
         var array = new float[size];
         for (var i = 0; i < size; i++) {
-            array[i] = list.get(i);
+            array[i] = floatValue(list.get(i));
         }
         return array;
     }
@@ -336,7 +344,7 @@ public abstract class ArrayUtils {
         var size = list.size();
         var array = new double[size];
         for (var i = 0; i < size; i++) {
-            array[i] = list.get(i);
+            array[i] = doubleValue(list.get(i));
         }
         return array;
     }
@@ -348,7 +356,7 @@ public abstract class ArrayUtils {
         var size = list.size();
         var array = new char[size];
         for (var i = 0; i < size; i++) {
-            array[i] = list.get(i);
+            array[i] = charValue(list.get(i));
         }
         return array;
     }
@@ -359,7 +367,9 @@ public abstract class ArrayUtils {
 
         var length = list.size();
         var objectArray = Array.newInstance(clazz, length);
-        return (T[]) copy(list.toArray(), objectArray, length);
+        @SuppressWarnings("unchecked")
+        var copy = (T[]) copy(list.toArray(), objectArray, length);
+        return copy;
     }
 
 
@@ -443,7 +453,9 @@ public abstract class ArrayUtils {
         AssertionUtils.notNull(clazz);
         var length = source.length;
         var target = Array.newInstance(clazz, length);
-        return (T[]) copy(source, target, length);
+        @SuppressWarnings("unchecked")
+        var copy = (T[]) copy(source, target, length);
+        return copy;
     }
 
     private static Object copy(Object source, Object target, int length) {

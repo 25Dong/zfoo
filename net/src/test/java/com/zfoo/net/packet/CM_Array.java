@@ -13,17 +13,15 @@
 
 package com.zfoo.net.packet;
 
-import com.zfoo.protocol.IPacket;
+import com.zfoo.protocol.anno.Protocol;
 
 import java.util.Arrays;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
-public class CM_Array implements IPacket {
-
-    public static final transient short PROTOCOL_ID = 1119;
+@Protocol(id = 1119)
+public class CM_Array {
 
     private int[] a;
 
@@ -49,11 +47,6 @@ public class CM_Array implements IPacket {
 
     public void setB(ObjectA[] b) {
         this.b = b;
-    }
-
-    @Override
-    public short protocolId() {
-        return PROTOCOL_ID;
     }
 
     @Override

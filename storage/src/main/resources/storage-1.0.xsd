@@ -38,6 +38,8 @@
     <!-- package声明类型 -->
     <xsd:complexType name="scan">
         <xsd:attribute name="package" type="xsd:string" use="required"/>
+        <xsd:attribute name="writeable" type="xsd:boolean" default="false"/>
+        <xsd:attribute name="recycle" type="xsd:boolean" default="true"/>
     </xsd:complexType>
 
 
@@ -45,8 +47,6 @@
     <xsd:complexType name="resource">
         <!-- 本地资源路径 -->
         <xsd:attribute name="location" type="xsd:string" use="required"/>
-        <!-- 资源文件后缀 -->
-        <xsd:attribute name="suffix" type="xsd:string" use="required"/>
     </xsd:complexType>
 
     <xsd:complexType name="configType">

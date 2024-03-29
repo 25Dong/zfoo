@@ -16,8 +16,7 @@ package com.zfoo.orm.schema;
 import org.springframework.beans.factory.xml.NamespaceHandlerSupport;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public class NamespaceHandler extends NamespaceHandlerSupport {
 

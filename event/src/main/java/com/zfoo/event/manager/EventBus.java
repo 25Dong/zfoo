@@ -10,107 +10,148 @@
  * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
  */
-
 package com.zfoo.event.manager;
 
-import com.zfoo.event.model.event.IEvent;
-import com.zfoo.event.model.vo.IEventReceiver;
+import com.zfoo.event.enhance.IEventReceiver;
+import com.zfoo.event.model.IEvent;
 import com.zfoo.protocol.collection.CollectionUtils;
-import com.zfoo.util.math.RandomUtils;
+import com.zfoo.protocol.collection.concurrent.CopyOnWriteHashMapLongObject;
+import com.zfoo.protocol.util.AssertionUtils;
+import com.zfoo.protocol.util.RandomUtils;
+import com.zfoo.protocol.util.StringUtils;
+import com.zfoo.protocol.util.ThreadUtils;
+import io.netty.util.concurrent.FastThreadLocalThread;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public abstract class EventBus {
 
     private static final Logger logger = LoggerFactory.getLogger(EventBus.class);
 
-    // 线程池的大小
-    public static final int EXECUTORS_SIZE = Runtime.getRuntime().availableProcessors() * 2;
+    /**
+     * EN: The size of the thread pool. Event's thread pool is often used to do time-consuming operations, so set it a little bigger
+     * CN: 线程池的大小. event的线程池经常用来做一些耗时的操作，所以要设置大一点
+     */
+    private static final int EXECUTORS_SIZE = Math.max(Runtime.getRuntime().availableProcessors(), 4) * 2 + 1;
 
     private static final ExecutorService[] executors = new ExecutorService[EXECUTORS_SIZE];
 
+    private static final CopyOnWriteHashMapLongObject<ExecutorService> threadMap = new CopyOnWriteHashMapLongObject<>(EXECUTORS_SIZE);
+    /**
+     * event mapping
+     */
     private static final Map<Class<? extends IEvent>, List<IEventReceiver>> receiverMap = new HashMap<>();
-
+    /**
+     * event exception handler
+     */
+    public static BiConsumer<IEventReceiver, IEvent> exceptionHandler = null;
+    public static Consumer<IEvent> noEventReceiverHandler = null;
 
     static {
         for (int i = 0; i < executors.length; i++) {
-            var namedThreadFactory = new EventThreadFactory(i + 1);
-            executors[i] = Executors.newSingleThreadExecutor(namedThreadFactory);
+            var namedThreadFactory = new EventThreadFactory(i);
+            var executor = Executors.newSingleThreadExecutor(namedThreadFactory);
+            executors[i] = executor;
+        }
+    }
+
+    public static class EventThreadFactory implements ThreadFactory {
+        private final int poolNumber;
+        private final AtomicInteger threadNumber = new AtomicInteger(1);
+        private final ThreadGroup group;
+
+        public EventThreadFactory(int poolNumber) {
+            this.group = Thread.currentThread().getThreadGroup();
+            this.poolNumber = poolNumber;
+        }
+
+        @Override
+        public Thread newThread(Runnable runnable) {
+            var threadName = StringUtils.format("event-p{}-t{}", poolNumber + 1, threadNumber.getAndIncrement());
+            var thread = new FastThreadLocalThread(group, runnable, threadName);
+            thread.setDaemon(false);
+            thread.setPriority(Thread.NORM_PRIORITY);
+            thread.setUncaughtExceptionHandler((t, e) -> logger.error(t.toString(), e));
+            var executor = executors[poolNumber];
+            AssertionUtils.notNull(executor);
+            threadMap.put(thread.getId(), executor);
+            return thread;
         }
     }
 
     /**
-     * 同步抛出一个事件，会在当前线程中运行
+     * Publish the event
      *
-     * @param event 需要抛出的事件
+     * @param event Event object
      */
-    public static void syncSubmit(IEvent event) {
-        var list = receiverMap.get(event.getClass());
-        if (CollectionUtils.isEmpty(list)) {
+    public static void post(IEvent event) {
+        if (event == null) {
             return;
         }
-        doSubmit(event, list);
-    }
-
-
-    /**
-     * 异步抛出一个事件，事件不在同一个线程中处理
-     *
-     * @param event 需要抛出的事件
-     */
-    public static void asyncSubmit(IEvent event) {
-        var list = receiverMap.get(event.getClass());
-        if (CollectionUtils.isEmpty(list)) {
-            return;
-        }
-
-        executors[Math.abs(event.threadId() % EXECUTORS_SIZE)].execute(new Runnable() {
-            @Override
-            public void run() {
-                doSubmit(event, list);
+        var clazz = event.getClass();
+        var receivers = receiverMap.get(clazz);
+        if (CollectionUtils.isEmpty(receivers)) {
+            if (noEventReceiverHandler != null) {
+                noEventReceiverHandler.accept(event);
             }
-        });
-    }
-
-    /**
-     * 随机获取一个线程池
-     */
-    public static Executor asyncExecute() {
-        return executors[RandomUtils.randomInt(EXECUTORS_SIZE)];
-    }
-
-    public static Executor execute(int hashcode) {
-        return executors[Math.abs(hashcode % EXECUTORS_SIZE)];
-    }
-
-    private static void doSubmit(IEvent event, List<IEventReceiver> receiverList) {
-        for (var receiver : receiverList) {
-            try {
-                receiver.invoke(event);
-            } catch (Exception e) {
-                logger.error("eventBus未知exception异常", e);
-            } catch (Throwable t) {
-                logger.error("eventBus未知error异常", t);
+            return;
+        }
+        for (var receiver : receivers) {
+            switch (receiver.bus()) {
+                case CurrentThread -> doReceiver(receiver, event);
+                case AsyncThread -> execute(event.executorHash(), () -> doReceiver(receiver, event));
+//                case VirtualThread -> Thread.ofVirtual().name("virtual-on" + clazz.getSimpleName()).start(() -> doReceiver(receiver, event));
             }
         }
     }
 
+    private static void doReceiver(IEventReceiver receiver, IEvent event) {
+        try {
+            receiver.invoke(event);
+        } catch (Throwable t) {
+            logger.error("eventBus {} [{}] unknown error", receiver.bus(), event.getClass().getSimpleName(), t);
+            if (exceptionHandler != null) {
+                exceptionHandler.accept(receiver, event);
+            }
+        }
+    }
+
+    public static void asyncExecute(Runnable runnable) {
+        execute(RandomUtils.randomInt(), runnable);
+    }
+
+    /**
+     * Use the event thread specified by the hashcode to execute the task
+     */
+    public static void execute(int executorHash, Runnable runnable) {
+        executors[Math.abs(executorHash % EXECUTORS_SIZE)].execute(ThreadUtils.safeRunnable(runnable));
+    }
+
+    /**
+     * Register the event and its counterpart observer
+     */
     public static void registerEventReceiver(Class<? extends IEvent> eventType, IEventReceiver receiver) {
-        receiverMap.computeIfAbsent(eventType, it -> new LinkedList<>()).add(receiver);
+        receiverMap.computeIfAbsent(eventType, it -> new ArrayList<>(1)).add(receiver);
     }
 
+    public static Executor threadExecutor(long currentThreadId) {
+        return threadMap.getPrimitive(currentThreadId);
+    }
 }
 
 

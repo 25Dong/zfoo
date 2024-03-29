@@ -12,24 +12,26 @@
 
 package com.zfoo.boot;
 
+import com.zfoo.boot.graalvm.GraalvmNetHints;
 import com.zfoo.net.NetContext;
-import com.zfoo.net.config.manager.ConfigManager;
+import com.zfoo.net.config.ConfigManager;
 import com.zfoo.net.config.model.NetConfig;
 import com.zfoo.net.consumer.Consumer;
-import com.zfoo.net.packet.service.PacketService;
+import com.zfoo.net.packet.PacketService;
 import com.zfoo.net.router.Router;
-import com.zfoo.net.session.manager.SessionManager;
+import com.zfoo.net.session.SessionManager;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.ImportRuntimeHints;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 @Configuration(proxyBeanMethods = false)
 @ConditionalOnBean(NetConfig.class)
+@ImportRuntimeHints(GraalvmNetHints.class)
 public class NetAutoConfiguration {
 
     @Bean

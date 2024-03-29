@@ -13,7 +13,6 @@
 
 package com.zfoo.protocol.serializer.reflect;
 
-import com.zfoo.protocol.IPacket;
 import com.zfoo.protocol.ProtocolManager;
 import com.zfoo.protocol.registration.IProtocolRegistration;
 import com.zfoo.protocol.registration.field.IFieldRegistration;
@@ -23,8 +22,7 @@ import io.netty.buffer.ByteBuf;
 /**
  * 只要是protocol都是使用FieldSerializer
  *
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public class ObjectProtocolSerializer implements ISerializer {
 
@@ -32,13 +30,12 @@ public class ObjectProtocolSerializer implements ISerializer {
 
     /**
      * @param buffer ByteBuf
-     * @param object 必须继承IPacket接口
      */
     @Override
     public void writeObject(ByteBuf buffer, Object object, IFieldRegistration fieldRegistration) {
         ObjectProtocolField objectProtocolField = (ObjectProtocolField) fieldRegistration;
         IProtocolRegistration protocol = ProtocolManager.getProtocol(objectProtocolField.getProtocolId());
-        protocol.write(buffer, (IPacket) object);
+        protocol.write(buffer, object);
     }
 
     @Override
@@ -46,5 +43,15 @@ public class ObjectProtocolSerializer implements ISerializer {
         ObjectProtocolField objectProtocolField = (ObjectProtocolField) fieldRegistration;
         IProtocolRegistration protocol = ProtocolManager.getProtocol(objectProtocolField.getProtocolId());
         return protocol.read(buffer);
+    }
+
+    @Override
+    public Object defaultValue(IFieldRegistration fieldRegistration) {
+        return null;
+    }
+
+    @Override
+    public int predictionLength(IFieldRegistration fieldRegistration) {
+        return 13;
     }
 }

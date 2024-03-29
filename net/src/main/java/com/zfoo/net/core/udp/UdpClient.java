@@ -15,25 +15,23 @@ package com.zfoo.net.core.udp;
 
 import com.zfoo.net.NetContext;
 import com.zfoo.net.core.AbstractClient;
+import com.zfoo.net.core.HostAndPort;
 import com.zfoo.net.handler.BaseRouteHandler;
 import com.zfoo.net.handler.ClientRouteHandler;
 import com.zfoo.net.handler.codec.udp.UdpCodecHandler;
-import com.zfoo.net.session.model.Session;
+import com.zfoo.net.session.Session;
 import com.zfoo.protocol.exception.ExceptionUtils;
-import com.zfoo.util.net.HostAndPort;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.epoll.Epoll;
 import io.netty.channel.epoll.EpollDatagramChannel;
 import io.netty.channel.socket.nio.NioDatagramChannel;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
-public class UdpClient extends AbstractClient {
+public class UdpClient extends AbstractClient<Channel> {
 
     public UdpClient(HostAndPort host) {
         super(host);
@@ -46,7 +44,7 @@ public class UdpClient extends AbstractClient {
             this.bootstrap.group(nioEventLoopGroup)
                     .channel(Epoll.isAvailable() ? EpollDatagramChannel.class : NioDatagramChannel.class)
                     .option(ChannelOption.SO_BROADCAST, true)
-                    .handler(new ChannelHandlerInitializer());
+                    .handler(this);
 
             // bind(0)随机选择一个端口
             var channelFuture = bootstrap.bind(0).sync();
@@ -63,7 +61,7 @@ public class UdpClient extends AbstractClient {
             } else if (channelFuture.cause() != null) {
                 logger.error(ExceptionUtils.getMessage(channelFuture.cause()));
             } else {
-                logger.error("启动客户端[client:{}]未知错误", this);
+                logger.error("[{}] started failed", this.getClass().getSimpleName());
             }
         } catch (Exception e) {
             logger.error(ExceptionUtils.getMessage(e));
@@ -72,18 +70,8 @@ public class UdpClient extends AbstractClient {
     }
 
     @Override
-    public ChannelInitializer<Channel> channelChannelInitializer() {
-        return new ChannelHandlerInitializer();
+    protected void initChannel(Channel channel) {
+        channel.pipeline().addLast(new UdpCodecHandler());
+        channel.pipeline().addLast(new ClientRouteHandler());
     }
-
-
-    private static class ChannelHandlerInitializer extends ChannelInitializer<Channel> {
-        @Override
-        protected void initChannel(Channel channel) {
-            channel.pipeline().addLast(new UdpCodecHandler());
-            channel.pipeline().addLast(new ClientRouteHandler());
-        }
-    }
-
-
 }

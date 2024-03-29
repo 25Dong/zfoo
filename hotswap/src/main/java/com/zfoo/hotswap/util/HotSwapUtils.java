@@ -17,18 +17,25 @@ import java.io.IOException;
 import java.lang.instrument.ClassDefinition;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * Hotswap java class
+ * <p>
+ * EN: Prefer using simple Javassist for hot updates, followed by Byte Buddy hot updates
+ * CN: 优先使用简单的Javassist做热更新，因为Byte Buddy使用了更为复杂的ASM，spring boot web项目中会优先使用Byte Buddy热更新
+ *
+ * @author godotg
  */
 public abstract class HotSwapUtils {
 
     private static final Logger logger = LoggerFactory.getLogger(HotSwapUtils.class);
 
     /**
-     * 热更新java文件
-     * JVM的启动参数，jdk11过后默认JVM不允许连接自己，需要加上JVM启动参数: -Djdk.attach.allowAttachSelf=true
+     * need to add JVM startup parameters: -Djdk.attach.allowAttachSelf=true
      * <p>
-     * 优先使用简单的Javassist做热更新，因为Byte Buddy使用了更为复杂的ASM，spring boot web项目中会优先使用Byte Buddy热更新
+     * JVM的启动参数，jdk11过后默认JVM不允许连接自己，所以需要自己添加 -Djdk.attach.allowAttachSelf=true 启动参数
+     * <p>
+     * note: 需要配置 JAVA_HOME 环境变量，如果没有配置这个环境变量可能会导致未知异常
+     * note: 使用 -cp 或者 -Djava.ext.dirs 参数可能会导致热更新未知异常，推荐使用maven-shade-plugin或者spring-boot-maven-plugin将工程打包进一个jar里。
+     * note: 使用 -cp热更时会有概率出现java.lang.NoClassDefFoundError，其中多现于Lambda表达式和静态Enum的类中
      *
      * @param bytes .class结尾的字节码文件
      */
@@ -43,7 +50,7 @@ public abstract class HotSwapUtils {
         try {
             clazz = Class.forName(clazzName);
         } catch (ClassNotFoundException e) {
-            logger.info("无法在当前项目找到[class:{}]，所以忽略本次热更新", clazzName);
+            logger.error("The class:[{}] could not be found in the current project and ignore this hot update", clazzName);
             return;
         }
 
@@ -69,31 +76,31 @@ public abstract class HotSwapUtils {
         ByteArrayInputStream byteArrayInputStream = null;
         CtClass ctClass = null;
         try {
-            clazz = Class.forName(readClassName(bytes));
             byteArrayInputStream = new ByteArrayInputStream(bytes);
             ctClass = ClassPool.getDefault().makeClass(byteArrayInputStream);
-            // Javassist热更新
+            // Javassist hot update
             HotSwapAgent.redefine(clazz, ctClass);
-            logger.info("Javassist热更新[{}]成功", clazz);
+            logger.info("Javassist hot update [{}] succeeded", clazz);
         } catch (Throwable t) {
-            logger.info("无法使用Javassist热更新，开始使用替补方案Byte Buddy做热更新", t);
+            logger.info("Unable to use the Javassist hot update, start using ByteBuddy as hotswap", t);
             hotswapClassByByteBuddy(clazz, bytes);
         } finally {
             IOUtils.closeIO(byteArrayInputStream);
             if (ctClass != null) {
                 ctClass.defrost();
+                ctClass.detach();
             }
         }
     }
 
     private static void hotswapClassByByteBuddy(Class<?> clazz, byte[] bytes) {
         try {
-            // Byte Buddy热更新
+            // Byte Buddy hot update
             var instrumentation = ByteBuddyAgent.install();
             instrumentation.redefineClasses(new ClassDefinition(clazz, bytes));
-            logger.info("Byte Buddy热更新[{}]成功", clazz);
+            logger.info("ByteBuddy hot update class:[{}] succeeded", clazz.getName());
         } catch (Throwable t) {
-            logger.error("Byte Buddy热更新未知异常，热更新[{}]失败", clazz);
+            logger.error("ByteBuddy hot update class:[{}] failed", clazz.getName());
         }
     }
 

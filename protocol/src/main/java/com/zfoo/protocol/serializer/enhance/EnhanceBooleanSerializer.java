@@ -21,14 +21,13 @@ import com.zfoo.protocol.util.StringUtils;
 import java.lang.reflect.Field;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public class EnhanceBooleanSerializer implements IEnhanceSerializer {
 
     @Override
     public void writeObject(StringBuilder builder, String objectStr, Field field, IFieldRegistration fieldRegistration) {
-        if (field.getType().isPrimitive()) {
+        if (isPrimitiveField(field)) {
             builder.append(StringUtils.format("{}.writeBoolean($1, {});", EnhanceUtils.byteBufUtils, objectStr));
         } else {
             builder.append(StringUtils.format("{}.writeBooleanBox($1, (Boolean){});", EnhanceUtils.byteBufUtils, objectStr));
@@ -38,13 +37,22 @@ public class EnhanceBooleanSerializer implements IEnhanceSerializer {
     @Override
     public String readObject(StringBuilder builder, Field field, IFieldRegistration fieldRegistration) {
         var result = "result" + GenerateProtocolFile.index.getAndIncrement();
-
-        if (field.getType().isPrimitive()) {
+        if (isPrimitiveField(field)) {
             builder.append(StringUtils.format("boolean {} = {}.readBoolean($1);", result, EnhanceUtils.byteBufUtils));
         } else {
             builder.append(StringUtils.format("Boolean {} = {}.readBooleanBox($1);", result, EnhanceUtils.byteBufUtils));
         }
+        return result;
+    }
 
+    @Override
+    public String defaultValue(StringBuilder builder, Field field, IFieldRegistration fieldRegistration) {
+        var result = "result" + GenerateProtocolFile.index.getAndIncrement();
+        if (isPrimitiveField(field)) {
+            builder.append(StringUtils.format("boolean {} = false;", result));
+        } else {
+            builder.append(StringUtils.format("Boolean {} = Boolean.FALSE;", result));
+        }
         return result;
     }
 

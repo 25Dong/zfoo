@@ -17,8 +17,7 @@ import com.zfoo.protocol.serializer.reflect.ISerializer;
 import com.zfoo.protocol.serializer.reflect.ObjectProtocolSerializer;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public class ObjectProtocolField implements IFieldRegistration {
 

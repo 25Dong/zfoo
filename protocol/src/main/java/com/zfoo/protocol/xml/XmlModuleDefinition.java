@@ -13,6 +13,7 @@
 
 package com.zfoo.protocol.xml;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
@@ -20,10 +21,10 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import java.util.List;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
-@JsonPropertyOrder({"id", "name", "minId", "maxId", "version"})
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonPropertyOrder({"id", "name"})
 public class XmlModuleDefinition {
 
     @JacksonXmlProperty(isAttribute = true, localName = "id")
@@ -31,15 +32,6 @@ public class XmlModuleDefinition {
 
     @JacksonXmlProperty(isAttribute = true, localName = "name")
     private String name;
-
-    @JacksonXmlProperty(isAttribute = true, localName = "minId")
-    private short minId;
-
-    @JacksonXmlProperty(isAttribute = true, localName = "maxId")
-    private short maxId;
-
-    @JacksonXmlProperty(isAttribute = true, localName = "version")
-    private String version;
 
     @JacksonXmlProperty(localName = "protocol")
     @JacksonXmlElementWrapper(useWrapping = false)
@@ -51,18 +43,6 @@ public class XmlModuleDefinition {
 
     public String getName() {
         return name;
-    }
-
-    public short getMinId() {
-        return minId;
-    }
-
-    public short getMaxId() {
-        return maxId;
-    }
-
-    public String getVersion() {
-        return version;
     }
 
     public List<XmlProtocolDefinition> getProtocols() {

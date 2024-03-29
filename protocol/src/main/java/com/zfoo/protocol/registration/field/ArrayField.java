@@ -17,8 +17,7 @@ import com.zfoo.protocol.serializer.reflect.ArraySerializer;
 import com.zfoo.protocol.serializer.reflect.ISerializer;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public class ArrayField implements IFieldRegistration {
 

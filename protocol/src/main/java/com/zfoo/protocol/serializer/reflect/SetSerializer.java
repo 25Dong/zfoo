@@ -15,17 +15,16 @@ package com.zfoo.protocol.serializer.reflect;
 
 import com.zfoo.protocol.buffer.ByteBufUtils;
 import com.zfoo.protocol.collection.CollectionUtils;
+import com.zfoo.protocol.registration.field.ArrayField;
 import com.zfoo.protocol.registration.field.IFieldRegistration;
 import com.zfoo.protocol.registration.field.SetField;
 import io.netty.buffer.ByteBuf;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public class SetSerializer implements ISerializer {
 
@@ -55,13 +54,9 @@ public class SetSerializer implements ISerializer {
 
     @Override
     public Object readObject(ByteBuf buffer, IFieldRegistration fieldRegistration) {
-        int size = ByteBufUtils.readInt(buffer);
-        if (size <= 0) {
-            return Collections.EMPTY_SET;
-        }
-
-        SetField setField = (SetField) fieldRegistration;
-        Set<Object> set = new HashSet<>(CollectionUtils.comfortableCapacity(size));
+        var size = ByteBufUtils.readInt(buffer);
+        var setField = (SetField) fieldRegistration;
+        Set<Object> set = CollectionUtils.newSet(size);
 
         for (int i = 0; i < size; i++) {
             Object value = setField.getSetElementRegistration().serializer().readObject(buffer, setField.getSetElementRegistration());
@@ -69,6 +64,18 @@ public class SetSerializer implements ISerializer {
         }
 
         return set;
+    }
+
+    @Override
+    public Object defaultValue(IFieldRegistration fieldRegistration) {
+        return new HashSet<>();
+    }
+
+    @Override
+    public int predictionLength(IFieldRegistration fieldRegistration) {
+        var setField = (SetField) fieldRegistration;
+        var length = setField.getSetElementRegistration().serializer().predictionLength(setField.getSetElementRegistration());
+        return 7 * length;
     }
 
 }

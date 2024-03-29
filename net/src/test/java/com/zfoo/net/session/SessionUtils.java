@@ -14,14 +14,14 @@
 package com.zfoo.net.session;
 
 import com.zfoo.net.NetContext;
-import com.zfoo.net.session.model.Session;
 import com.zfoo.protocol.util.FileUtils;
 import com.zfoo.protocol.util.StringUtils;
-import com.zfoo.util.ThreadUtils;
+import com.zfoo.protocol.util.ThreadUtils;
+
+import java.util.function.Consumer;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public abstract class SessionUtils {
 
@@ -30,19 +30,24 @@ public abstract class SessionUtils {
             while (true) {
                 ThreadUtils.sleep(10_000);
                 var builder = new StringBuilder();
-                builder.append(StringUtils.format("clientSession总数：[{}]", NetContext.getSessionManager().getClientSessionMap().size()));
                 builder.append(FileUtils.LS);
-                for (Session session : NetContext.getSessionManager().getClientSessionMap().values()) {
-                    builder.append(StringUtils.format("[session:{}]", session.getChannel().remoteAddress()));
-                    builder.append(FileUtils.LS);
-                }
+                NetContext.getSessionManager().forEachClientSession(new Consumer<Session>() {
+                    @Override
+                    public void accept(Session session) {
+                        builder.append(StringUtils.format("[session:{}]", session.getChannel().remoteAddress()));
+                        builder.append(FileUtils.LS);
+                    }
+                });
 
-                builder.append(StringUtils.format("serverSession总数：[{}]", NetContext.getSessionManager().getServerSessionMap().size()));
+                builder.append(StringUtils.format("serverSession count：[{}]", NetContext.getSessionManager().serverSessionSize()));
                 builder.append(FileUtils.LS);
-                for (Session session : NetContext.getSessionManager().getServerSessionMap().values()) {
-                    builder.append(StringUtils.format("[session:{}]", session.getChannel().remoteAddress()));
-                    builder.append(FileUtils.LS);
-                }
+                NetContext.getSessionManager().forEachServerSession(new Consumer<Session>() {
+                    @Override
+                    public void accept(Session session) {
+                        builder.append(StringUtils.format("[session:{}]", session.getChannel().remoteAddress()));
+                        builder.append(FileUtils.LS);
+                    }
+                });
 
                 System.out.println(builder.toString());
 

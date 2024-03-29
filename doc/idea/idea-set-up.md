@@ -15,7 +15,9 @@
 安装好以后，在git bash中输入：git --version，有结果返回则表示安装成功
 ```
 
-- git下载代码慢的解决方法|无法下载代码的解决方法
+- 参看所有的git配置，git config --list
+
+- git下载代码慢的解决方法|无法下载代码的解决方法，取消git配置使用git config --global --unset http.proxy
 
 ```
 使用vpn
@@ -30,6 +32,25 @@ git config --global https.proxy https://127.0.0.1:10809
 git config --global core.autocrlf input
 ```
 
+- google translate设置
+
+```
+direct -> domain:zfoo.net
+
+新增proxy
+proxy -> 
+ranslate.googleapis.com, 
+ranslate.google.com
+```
+
+- idea git log 不同颜色
+
+```
+黄色代表HEAD,
+绿色表示的是你本地分支,
+紫色是远程分支,
+```
+
 ## 3. nodejs安装
 
 - 直接默认安装
@@ -38,6 +59,8 @@ git config --global core.autocrlf input
 查看npm是否安装成功：npm --version；  
 查看nodejs是否安装成功：node --version；
 ```
+
+- npm install -g yarn
 
 - 在package.json文件右键,npm install安装依赖包
 
@@ -50,9 +73,16 @@ git config --global core.autocrlf input
 
 ## 4. mongodb
 
+### mongo 4.0
+
 1. 直接安装MongoDB，用custom自定义安装目录，一般用默认的安装目录即可，不要勾选mongoDB compass
 2. 将C:\Program Files\MongoDB\Server\4.2\bin配置到环境变量中，便于全局使用
 3. mongo -version # 查看安装的版本
+
+### mongo 6.0
+
+1. 直接安装MongoDB，用custom自定义安装目录，一般用默认的安装目录即可，不要勾选mongoDB compass
+2. 直接安装MongoSh，将安装目录定位到MongoDB的bin目录
 
 ## 5. idea，mongodb，postman
 
@@ -134,12 +164,11 @@ Line separator，Unix and MacOs （\n）
 
 ```
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 ```
 
-- 版权信息设置：Editor->Copyright->Copyright Profiles
+- 版权信息设置：Editor->Copyright->Copyright Profiles，注意下面的版权信息不要有多余的换行
 
 ```
 Copyright (C) 2020 The zfoo Authors
@@ -161,6 +190,8 @@ See the License for the specific language governing permissions and limitations 
 - maven代理设置（非全局），-DproxySet=true -DproxyHost=127.0.0.1 -DproxyPort=10809
   ![Image text](../image/idea/idea-proxy-maven.jpg)
 
+- 设置自动下载源代码，将上图的sources，documentation，annotations勾上
+
 ## 6 使用Idea默认的快捷键设置
 
 - eclipse快捷键设置，个人习惯
@@ -175,11 +206,19 @@ replace，设置为alt+f
 
 ### 4.2 服务器插件安装
 
+- translate插件
+
+```
+快捷键设置
+Show Translation Dialog，设置为ctrl + shift + x
+Translate，设置为ctrl + x
+```
+
 - Cyan Light Theme主题插件，个人习惯
 - zoolytic，zookeeper客户端管理插件，推荐下载
-- vue.js，vue语法识别，推荐下载
-- jclasslib，字节码查看工具，推荐下载
 - Maven Helper，maven依赖查看工具，推荐下载
+- jclasslib，字节码查看工具，推荐下载
+- vue，vue语法识别，推荐下载
 
 - Alibaba Java Coding Guidelines
 - Alibaba Cloud tool
@@ -206,15 +245,3 @@ replace，设置为alt+f
   ![Image text](../image/idea/idea-setting-html-0.png)
   ![Image text](../image/idea/idea-setting-html-1.png)
 
-## 5.Lingoes安装
-
-- 在电脑管家上下载也可以，直接默认安装
-  ![Image text](../image/idea/lingoes-00.png)
-  ![Image text](../image/idea/lingoes-01.png)
-  ![Image text](../image/idea/lingoes-02.png)
-
-```
-在下面的文件夹下，将Lingoes English.zip解压到这个目录下
-C:\Users\Administrator\AppData\Local\Lingoes\Translator\user_data\speech
-重启Lingoes，在设置->语言中，选择声音，英语
-```

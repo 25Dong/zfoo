@@ -20,8 +20,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public class TreeNode<T> {
 

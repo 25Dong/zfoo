@@ -14,48 +14,28 @@
 package com.zfoo.net.config.model;
 
 
-import com.zfoo.protocol.registration.ProtocolModule;
-
 import java.util.List;
 import java.util.Objects;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public class ConsumerConfig {
 
-    private String loadBalancer;
+    private List<ConsumerModule> consumers;
 
-    private List<ProtocolModule> modules;
-
-    public static ConsumerConfig valueOf(String loadBalancer, List<ProtocolModule> modules) {
+    public static ConsumerConfig valueOf(List<ConsumerModule> modules) {
         ConsumerConfig config = new ConsumerConfig();
-        config.loadBalancer = loadBalancer;
-        config.modules = modules;
+        config.consumers = modules;
         return config;
     }
 
-    public static ConsumerConfig valueOf(List<ProtocolModule> modules) {
-        ConsumerConfig config = new ConsumerConfig();
-        config.modules = modules;
-        return config;
+    public List<ConsumerModule> getConsumers() {
+        return consumers;
     }
 
-    public String getLoadBalancer() {
-        return loadBalancer;
-    }
-
-    public void setLoadBalancer(String loadBalancer) {
-        this.loadBalancer = loadBalancer;
-    }
-
-    public List<ProtocolModule> getModules() {
-        return modules;
-    }
-
-    public void setModules(List<ProtocolModule> modules) {
-        this.modules = modules;
+    public void setConsumers(List<ConsumerModule> consumers) {
+        this.consumers = consumers;
     }
 
     @Override
@@ -67,11 +47,11 @@ public class ConsumerConfig {
             return false;
         }
         ConsumerConfig that = (ConsumerConfig) o;
-        return Objects.equals(modules, that.modules);
+        return Objects.equals(consumers, that.consumers);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(modules);
+        return Objects.hash(consumers);
     }
 }

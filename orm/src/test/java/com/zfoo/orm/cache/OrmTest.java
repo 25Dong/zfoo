@@ -13,15 +13,13 @@
 
 package com.zfoo.orm.cache;
 
-import com.zfoo.orm.OrmContext;
-import com.zfoo.util.ThreadUtils;
+import com.zfoo.protocol.util.ThreadUtils;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 @Ignore
 public class OrmTest {
@@ -39,8 +37,6 @@ public class OrmTest {
             entity.setC(i);
             userEntityCaches.update(entity);
         }
-
-        OrmContext.getOrmManager().getAllEntityCaches().forEach(it -> System.out.println(it.recordStatus()));
 
         ThreadUtils.sleep(Long.MAX_VALUE);
     }

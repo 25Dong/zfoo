@@ -16,10 +16,10 @@ package com.zfoo.scheduler;
 import com.zfoo.protocol.collection.ArrayUtils;
 import com.zfoo.protocol.util.ReflectionUtils;
 import com.zfoo.protocol.util.StringUtils;
+import com.zfoo.protocol.util.ThreadUtils;
+import com.zfoo.scheduler.anno.Scheduler;
+import com.zfoo.scheduler.enhance.SchedulerDefinition;
 import com.zfoo.scheduler.manager.SchedulerBus;
-import com.zfoo.scheduler.model.anno.Scheduler;
-import com.zfoo.scheduler.model.vo.SchedulerDefinition;
-import com.zfoo.util.ThreadUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
@@ -28,14 +28,14 @@ import org.springframework.context.event.ApplicationContextEvent;
 import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.core.Ordered;
+import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public class SchedulerContext implements ApplicationListener<ApplicationContextEvent>, Ordered {
 
@@ -80,8 +80,7 @@ public class SchedulerContext implements ApplicationListener<ApplicationContextE
 
         logger.info("Scheduler shutdown gracefully.");
     }
-
-
+    
     @Override
     public void onApplicationEvent(ApplicationContextEvent event) {
         if (event instanceof ContextRefreshedEvent) {
@@ -89,25 +88,24 @@ public class SchedulerContext implements ApplicationListener<ApplicationContextE
             SchedulerContext.instance = this;
             instance.applicationContext = event.getApplicationContext();
             inject();
+            // 启动位于SchedulerBus的static静态代码块中
         } else if (event instanceof ContextClosedEvent) {
+            // 反射获取executor,关闭掉
             shutdown();
         }
     }
 
     public void inject() {
-        var beanNames = applicationContext.getBeanDefinitionNames();
-        for (var beanName : beanNames) {
-            var bean = applicationContext.getBean(beanName);
+        var componentBeans =  applicationContext.getBeansWithAnnotation(Component.class);
+        for (var bean : componentBeans.values()) {
             var clazz = bean.getClass();
-
             var methods = ReflectionUtils.getMethodsByAnnoInPOJOClass(bean.getClass(), Scheduler.class);
-
             if (ArrayUtils.isEmpty(methods)) {
                 continue;
             }
 
             if (!ReflectionUtils.isPojoClass(clazz)) {
-                logger.warn("调度注册类[{}]不是POJO类，父类的调度不会被扫描到", clazz);
+                logger.warn("The message registration class [{}] is not a POJO class, and the parent class will not be scanned", clazz);
             }
 
             try {

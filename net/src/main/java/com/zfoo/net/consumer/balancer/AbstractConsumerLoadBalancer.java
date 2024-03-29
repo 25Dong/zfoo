@@ -13,22 +13,10 @@
 
 package com.zfoo.net.consumer.balancer;
 
-import com.zfoo.net.NetContext;
-import com.zfoo.net.consumer.registry.RegisterVO;
-import com.zfoo.net.session.model.AttributeType;
-import com.zfoo.net.session.model.Session;
-import com.zfoo.protocol.IPacket;
-import com.zfoo.protocol.ProtocolManager;
-import com.zfoo.protocol.registration.ProtocolModule;
 import com.zfoo.protocol.util.StringUtils;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
-
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public abstract class AbstractConsumerLoadBalancer implements IConsumerLoadBalancer {
 
@@ -36,58 +24,18 @@ public abstract class AbstractConsumerLoadBalancer implements IConsumerLoadBalan
         AbstractConsumerLoadBalancer balancer;
         switch (loadBalancer) {
             case "random":
-                balancer = RandomConsumerLoadBalancer.getInstance();
+                balancer = RandomLoadBalancer.getInstance();
                 break;
             case "consistent-hash":
-                balancer = ConsistentHashConsumerLoadBalancer.getInstance();
+                balancer = ConsistentHashLoadBalancer.getInstance();
                 break;
-            case "shortest-time":
-                balancer = ShortestTimeConsumerLoadBalancer.getInstance();
+            case "cached-consistent-hash":
+                balancer = CachedConsistentHashLoadBalancer.getInstance();
                 break;
             default:
-                throw new RuntimeException(StringUtils.format("无法识别负载均衡器[{}]", loadBalancer));
+                throw new RuntimeException(StringUtils.format("Load balancer is not recognized[{}]", loadBalancer));
         }
         return balancer;
     }
 
-    public List<Session> getSessionsByPacket(IPacket packet) {
-        return getSessionsByModule(ProtocolManager.moduleByProtocolId(packet.protocolId()));
-    }
-
-    public List<Session> getSessionsByModule(ProtocolModule module) {
-        var clientSessionMap = NetContext.getSessionManager().getClientSessionMap();
-        var sessions = clientSessionMap.values().stream()
-                .filter(it -> {
-                    var attribute = it.getAttribute(AttributeType.CONSUMER);
-                    if (Objects.nonNull(attribute)) {
-                        var registerVO = (RegisterVO) attribute;
-                        if (Objects.nonNull(registerVO.getProviderConfig()) && registerVO.getProviderConfig().getModules().contains(module)) {
-                            return true;
-                        } else {
-                            return false;
-                        }
-                    } else {
-                        return false;
-                    }
-                })
-                .collect(Collectors.toList());
-        return sessions;
-    }
-
-
-    public boolean sessionHasModule(Session session, IPacket packet) {
-
-        var attribute = session.getAttribute(AttributeType.CONSUMER);
-        if (Objects.isNull(attribute)) {
-            return false;
-        }
-
-        var registerVO = (RegisterVO) attribute;
-        if (Objects.isNull(registerVO.getProviderConfig())) {
-            return false;
-        }
-
-        var module = ProtocolManager.moduleByProtocolId(packet.protocolId());
-        return registerVO.getProviderConfig().getModules().contains(module);
-    }
 }

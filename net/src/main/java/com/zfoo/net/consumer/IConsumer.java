@@ -13,27 +13,37 @@
 
 package com.zfoo.net.consumer;
 
+import com.zfoo.net.consumer.balancer.IConsumerLoadBalancer;
 import com.zfoo.net.router.answer.AsyncAnswer;
 import com.zfoo.net.router.answer.SyncAnswer;
-import com.zfoo.protocol.IPacket;
+import com.zfoo.net.session.Session;
 import org.springframework.lang.Nullable;
 
+import java.util.List;
+
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public interface IConsumer {
 
+    void init();
+
+    List<Session> findProviders(Object packet);
+
+    IConsumerLoadBalancer selectLoadBalancer(List<Session> providers, Object packet);
+
     /**
      * 直接发送，不需要任何返回值
+     * <p>
+     * 例子：参考 com.zfoo.app.zapp.chat.controller。FrinedController 的 atApplyFriendRequest方法，客户端发起申请请求，chat服务处理后，再把消息直接发给网关
      *
      * @param packet   需要发送的包
      * @param argument 计算负载均衡的参数，比如用户的id
      */
-    void send(IPacket packet, @Nullable Object argument);
+    void send(Object packet, @Nullable Object argument);
 
-    <T extends IPacket> SyncAnswer<T> syncAsk(IPacket packet, Class<T> answerClass, @Nullable Object argument) throws Exception;
+    <T> SyncAnswer<T> syncAsk(Object packet, Class<T> answerClass, @Nullable Object argument) throws Exception;
 
-    <T extends IPacket> AsyncAnswer<T> asyncAsk(IPacket packet, Class<T> answerClass, @Nullable Object argument);
+    <T> AsyncAnswer<T> asyncAsk(Object packet, Class<T> answerClass, @Nullable Object argument);
 
 }

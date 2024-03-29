@@ -15,39 +15,31 @@ package com.zfoo.net.router;
 
 import com.zfoo.net.router.answer.AsyncAnswer;
 import com.zfoo.net.router.answer.SyncAnswer;
-import com.zfoo.net.router.attachment.IAttachment;
-import com.zfoo.net.session.model.Session;
-import com.zfoo.protocol.IPacket;
+import com.zfoo.net.session.Session;
+import com.zfoo.net.task.PacketReceiverTask;
 import org.springframework.lang.Nullable;
 
-
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public interface IRouter {
 
-    void send(Session session, IPacket packet);
-
     /**
-     * send()和receive()是消息的发送和接收的入口，可以直接调用，是最轻量级发送和接收方式
+     * EN:send() and receive() are the entry points for sending and receiving messages, which can be called directly
+     * CN:send()和receive()是消息的发送和接收的入口，可以直接调用
      */
-    void send(Session session, IPacket packet, @Nullable IAttachment attachment);
+    void send(Session session, Object packet);
+
+    void send(Session session, Object packet, @Nullable Object attachment);
+
+    void receive(Session session, Object packet, @Nullable Object attachment);
+
+    void atReceiver(PacketReceiverTask packetReceiverTask);
+
+    void registerPacketReceiverDefinition(Object bean);
 
     /**
-     * 2.接受到消息（路由分发：由Netty的Worker线程 线程提交到 自定的线程）
-     * @param session
-     * @param packet
-     * @param attachment
-     */
-    void receive(Session session, IPacket packet, @Nullable IAttachment attachment);
-
-    void atReceiver(Session session, IPacket packet, @Nullable IAttachment attachment);
-
-    /**
-     * attention：syncAsk和asyncAsk只能客户端调用
-     * 同一个客户端可以同时发送多条同步或者异步消息。
-     * 服务器对每个请求消息也只能回复一条消息，不能在处理一条不同或者异步消息的时候回复多条消息。
+     * 服务器对每个syncAsk和asyncAsk请求消息也只能回复一条消息，不能在处理一条不同或者异步消息的时候回复多条消息。
      *
      * @param session     一个网络通信的会话
      * @param packet      一个网络通信包，消息体
@@ -58,13 +50,12 @@ public interface IRouter {
      * @param argument    参数，主要用来计算一致性hashId。
      *                    1.IConsumer会使用这个参数计算负载到哪个服务提供者；
      *                    2.服务提供者收到请求过后会使用这个参数来计算再哪个线程执行任务；
-     *                    3.如果是异步请求，消费者收到消息过后会通过这个参数计算再哪个线程执行回调。
-     *                    综上所述，这个参数会在上面三种情况使用。
+     *                    综上所述，这个参数会在上面两种情况使用。
      * @return 服务器返回的消息Response
      * @throws Exception 如果超时或者其它异常
      */
-    <T extends IPacket> SyncAnswer<T> syncAsk(Session session, IPacket packet, @Nullable Class<T> answerClass, @Nullable Object argument) throws Exception;
+    <T> SyncAnswer<T> syncAsk(Session session, Object packet, @Nullable Class<T> answerClass, @Nullable Object argument) throws Exception;
 
-    <T extends IPacket> AsyncAnswer<T> asyncAsk(Session session, IPacket packet, @Nullable Class<T> answerClass, @Nullable Object argument);
+    <T> AsyncAnswer<T> asyncAsk(Session session, Object packet, @Nullable Class<T> answerClass, @Nullable Object argument);
 
 }

@@ -12,23 +12,14 @@
 
 package com.zfoo.net.packet.websocket;
 
-import com.zfoo.protocol.IPacket;
+import com.zfoo.protocol.anno.Protocol;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
-public class WebsocketHelloResponse implements IPacket {
-
-    public static final transient short PROTOCOL_ID = 1401;
-
+@Protocol(id = 1401)
+public class WebsocketHelloResponse {
     private String message;
-
-
-    @Override
-    public short protocolId() {
-        return PROTOCOL_ID;
-    }
 
     public String getMessage() {
         return message;

@@ -23,8 +23,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 @Ignore
 public class AccessorTest {

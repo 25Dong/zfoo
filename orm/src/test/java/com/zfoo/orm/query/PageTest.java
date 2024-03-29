@@ -13,7 +13,6 @@
 
 package com.zfoo.orm.query;
 
-import com.zfoo.orm.model.query.Page;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -21,8 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public class PageTest {
 

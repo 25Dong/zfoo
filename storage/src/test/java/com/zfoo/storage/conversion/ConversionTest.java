@@ -29,8 +29,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public class ConversionTest {
     private static final ConversionServiceFactoryBean csfb = new ConversionServiceFactoryBean();
@@ -59,23 +58,13 @@ public class ConversionTest {
     }
 
     @Test
-    public void string2Class() {
-        ConversionService conversionService = csfb.getObject();
-        // String to Class
-        Class<?> clazz = (Class<?>) conversionService.convert("com.zfoo.storage.model.vo.Storage", TypeDescriptor.valueOf(String.class), TypeDescriptor.valueOf(Class.class));
-
-        Assert.assertEquals("com.zfoo.storage.model.vo.Storage", clazz.getName());
-    }
-
-    @Test
     public void string2Map() {
         ConversionService conversionService = csfb.getObject();
         //Json to Map
         String str = "{\"1\":1,\"2\":2,\"3\":3}";
-
-        Map<Integer, Integer> map = new HashMap<Integer, Integer>();
-
-        map = (Map<Integer, Integer>) conversionService.convert(str, TypeDescriptor.valueOf(String.class), TypeDescriptor.valueOf(map.getClass()));
+        // 注意：第3个参数不能写成TypeDescriptor.valueOf(map.getClass())  而是要明确指定Map的key和value的类型
+        @SuppressWarnings("unchecked")
+        var map = (Map<Integer, Integer>) conversionService.convert(str, TypeDescriptor.valueOf(String.class), TypeDescriptor.map(HashMap.class, TypeDescriptor.valueOf(String.class), TypeDescriptor.valueOf(Integer.class)));
 
         Assert.assertEquals(3, map.size());
     }

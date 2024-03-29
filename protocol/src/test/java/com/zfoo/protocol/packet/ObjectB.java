@@ -13,44 +13,22 @@
 
 package com.zfoo.protocol.packet;
 
-import com.zfoo.protocol.IPacket;
 
-import java.util.Objects;
+import com.zfoo.protocol.anno.Compatible;
+import com.zfoo.protocol.anno.Protocol;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
-public class ObjectB implements IPacket {
+@Protocol(id = 103)
+public record ObjectB(
 
-    public static final transient short PROTOCOL_ID = 103;
+        boolean flag
 
-    private boolean flag;
+//        ,
+//        @Compatible(1)
+//        int innerCompatibleValue
 
-    @Override
-    public short protocolId() {
-        return PROTOCOL_ID;
-    }
-
-    public boolean isFlag() {
-        return flag;
-    }
-
-    public void setFlag(boolean flag) {
-        this.flag = flag;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        ObjectB objectB = (ObjectB) o;
-        return flag == objectB.flag;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(flag);
-    }
+) {
 }
 

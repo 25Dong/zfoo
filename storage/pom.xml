@@ -6,177 +6,88 @@
 
     <groupId>com.zfoo</groupId>
     <artifactId>storage</artifactId>
-    <version>3.0</version>
-
     <packaging>jar</packaging>
-
+    <version>3.3.1</version>
 
     <properties>
-        <!-- 本项目的其它module版本号 -->
-        <zfoo.boot.version>3.0</zfoo.boot.version>
-        <zfoo.event.version>3.0</zfoo.event.version>
-        <zfoo.hotswap.version>3.0</zfoo.hotswap.version>
-        <zfoo.monitor.version>3.0</zfoo.monitor.version>
-        <zfoo.net.version>3.0</zfoo.net.version>
-        <zfoo.scheduler.version>3.0</zfoo.scheduler.version>
-        <zfoo.storage.version>3.0</zfoo.storage.version>
-        <zfoo.orm.version>3.0</zfoo.orm.version>
-        <zfoo.protocol.version>3.0</zfoo.protocol.version>
-        <zfoo.util.version>3.0</zfoo.util.version>
-
-
-        <!-- 核心spring框架 -->
-        <spring.version>5.3.4</spring.version>
-        <spring.boot.version>2.4.3</spring.boot.version>
-
-
-        <!-- 工具包 -->
-        <commons-codec.version>1.15</commons-codec.version>
-        <commons-io.version>2.8.0</commons-io.version>
-        <commons-collections.version>4.4</commons-collections.version>
-        <commons-lang.version>3.12.0</commons-lang.version>
-        <commons-fileupload.version>1.4</commons-fileupload.version>
-        <commons-logging.version>1.2</commons-logging.version>
-        <commons-log4j.version>2.14.0</commons-log4j.version>
-        <httpcomponents.version>4.5.13</httpcomponents.version>
-        <httpcore.version>4.4.14</httpcore.version>
-        <google.guava.version>30.1-jre</google.guava.version>
-        <google.protobuf.version>3.9.1</google.protobuf.version>
-        <google.gson.version>2.8.6</google.gson.version>
-        <jprotobuf.version>2.4.13</jprotobuf.version>
-        <kryo.version>5.0.3</kryo.version>
-        <caffeine.version>2.8.8</caffeine.version>
-        <jctools.version>3.2.0</jctools.version>
-        <hutool.version>5.5.9</hutool.version>
-        <oshi.version>5.7.0</oshi.version>
-        <snakeyaml.version>1.28</snakeyaml.version>
-
-
-        <!-- json和xml解析包 -->
-        <jackson.version>2.12.1</jackson.version>
-        <fastjson.version>1.2.51</fastjson.version>
-        <!-- office文档解析包 -->
-        <poi.version>4.1.2</poi.version>
-        <!-- 字节码增强 -->
-        <javassist.version>3.27.0-GA</javassist.version>
-        <bytebuddy.version>1.10.22</bytebuddy.version>
-
-        <!-- 网络通讯框架 -->
-        <netty.version>4.1.63.Final</netty.version>
-
-        <!-- 分布式zookeeper核心依赖包 -->
-        <zookeeper.version>3.6.1</zookeeper.version>
-        <curator.version>5.1.0</curator.version>
-
-        <!-- 数据库和缓存 -->
-        <mongodb-driver-sync.version>4.2.1</mongodb-driver-sync.version>
-        <jedis.version>3.3.0</jedis.version>
-
-        <!-- 消息队列中间件 -->
-        <rocketmq.version>4.5.2</rocketmq.version>
-
-        <!-- elastic search 中间件 -->
-        <elastic.search.version>7.9.3</elastic.search.version>
-        <elastic.search.spring.version>4.1.5</elastic.search.spring.version>
-        <lucene.version>8.6.2</lucene.version>
-
-
-        <slf4j.version>1.7.30</slf4j.version>
-        <logback.version>1.2.3</logback.version>
-
-        <junit.version>4.12</junit.version>
-
-        <!-- java版本和文件编码 -->
-        <java.version>11</java.version>
-        <file.encoding>UTF-8</file.encoding>
-        <jakarta.version>1.3.5</jakarta.version>
-
-        <!-- maven核心插件 -->
-        <maven-clean-plugin.version>3.1.0</maven-clean-plugin.version>
-        <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
-        <maven-resources-plugin.version>3.2.0</maven-resources-plugin.version>
-        <maven-surefire-plugin.version>3.0.0-M5</maven-surefire-plugin.version>
-        <maven-jar-plugin.version>3.2.0</maven-jar-plugin.version>
-        <maven-shade-plugin.version>3.2.4</maven-shade-plugin.version>
-        <versions-maven-plugin.version>2.8.1</versions-maven-plugin.version>
-
-
+        <zfoo.version>3.3.1</zfoo.version>
+        <!-- spring and spring boot -->
+        <spring.version>6.1.2</spring.version>
+        <spring.boot.version>3.2.1</spring.boot.version>
+        <junit.version>4.13.2</junit.version>
+        <!-- bytecode enhancement -->
+        <javassist.version>3.29.2-GA</javassist.version>
+        <bytebuddy.version>1.14.6</bytebuddy.version>
+        <!-- network framework -->
+        <netty.version>4.1.104.Final</netty.version>
+        <!-- zookeeper -->
+        <curator.version>5.5.0</curator.version>
+        <!-- hardware detection -->
+        <oshi.version>6.4.5</oshi.version>
+        <!-- Office document parsing -->
+        <poi.version>5.2.3</poi.version>
+        <csv.version>1.10.0</csv.version>
+        <!-- maven core plugin -->
+        <native-maven-plugin.version>0.10.1</native-maven-plugin.version>
+        <maven-clean-plugin.version>3.3.1</maven-clean-plugin.version>
+        <maven-resources-plugin.version>3.3.1</maven-resources-plugin.version>
+        <maven-compiler-plugin.version>3.11.0</maven-compiler-plugin.version>
+        <maven-surefire-plugin.version>3.1.2</maven-surefire-plugin.version>
+        <maven-jar-plugin.version>3.3.0</maven-jar-plugin.version>
+        <maven-shade-plugin.version>3.5.0</maven-shade-plugin.version>
+        <maven-install-plugin.version>3.1.1</maven-install-plugin.version>
+        <!-- deploy maven repository -->
+        <nexus-staging-maven-plugin.version>1.6.13</nexus-staging-maven-plugin.version>
+        <maven-deploy-plugin.version>3.1.1</maven-deploy-plugin.version>
+        <maven-source-plugin.version>3.3.0</maven-source-plugin.version>
+        <maven-javadoc-plugin.version>3.5.0</maven-javadoc-plugin.version>
+        <maven-gpg-plugin.version>3.1.0</maven-gpg-plugin.version>
+        <versions-maven-plugin.version>2.16.0</versions-maven-plugin.version>
+        <!-- encoding and java version -->
         <project.build.sourceEncoding>${file.encoding}</project.build.sourceEncoding>
         <maven.compiler.encoding>${file.encoding}</maven.compiler.encoding>
+        <java.version>17</java.version>
+        <file.encoding>UTF-8</file.encoding>
     </properties>
-
 
     <dependencies>
         <dependency>
             <groupId>com.zfoo</groupId>
             <artifactId>scheduler</artifactId>
-            <version>${zfoo.util.version}</version>
+            <version>${zfoo.version}</version>
         </dependency>
 
-        <dependency>
-            <groupId>com.zfoo</groupId>
-            <artifactId>util</artifactId>
-            <version>${zfoo.util.version}</version>
-        </dependency>
-
-        <!-- 依赖的Spring模块类库 -->
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-context</artifactId>
             <version>${spring.version}</version>
         </dependency>
 
-        <!-- excel，world，ppt,xml操作库 -->
-        <!--Apache POI是用Java编写的免费开源的跨平台的 Java API，提供对Microsoft Office格式档案读和写的功能。
-            POI为“Poor Obfuscation Implementation”的首字母缩写，意为“可怜的模糊实现”。-->
-        <dependency>
-            <groupId>org.apache.poi</groupId>
-            <artifactId>poi</artifactId>
-            <version>${poi.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>commons-codec</groupId>
-                    <artifactId>commons-codec</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>commons-codec</groupId>
-            <artifactId>commons-codec</artifactId>
-            <version>${commons-codec.version}</version>
-        </dependency>
+        <!-- excel，world，ppt,xml operation library -->
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi-ooxml</artifactId>
             <version>${poi.version}</version>
-        </dependency>
-
-        <!-- slf4j-api -->
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>${slf4j.version}</version>
-        </dependency>
-        <!-- logback核心包 -->
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-core</artifactId>
-            <version>${logback.version}</version>
-        </dependency>
-        <!-- logback的sl4j的实现 -->
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>${logback.version}</version>
             <exclusions>
                 <exclusion>
-                    <artifactId>slf4j-api</artifactId>
-                    <groupId>org.slf4j</groupId>
+                    <artifactId>log4j-api</artifactId>
+                    <groupId>org.apache.logging.log4j</groupId>
                 </exclusion>
             </exclusions>
         </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-csv</artifactId>
+            <version>${csv.version}</version>
+        </dependency>
 
-        <!-- 依赖的测试库 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-logging</artifactId>
+            <version>${spring.boot.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
@@ -191,15 +102,12 @@
         <testSourceDirectory>src/test/java</testSourceDirectory>
 
         <plugins>
-
-            <!-- 清理插件 -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-clean-plugin</artifactId>
                 <version>${maven-clean-plugin.version}</version>
             </plugin>
 
-            <!-- 编译插件 -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -211,8 +119,6 @@
                 </configuration>
             </plugin>
 
-
-            <!-- resource资源管理插件 -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>
@@ -238,15 +144,12 @@
                 </executions>
             </plugin>
 
-
-            <!-- 测试插件 -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${maven-surefire-plugin.version}</version>
                 <configuration>
-                    <forkMode>once</forkMode>
-                    <threadCount>10</threadCount>
+                    <threadCount>8</threadCount>
                     <argLine>-Dfile.encoding=${file.encoding}</argLine>
                 </configuration>
             </plugin>
@@ -256,8 +159,116 @@
                 <artifactId>maven-jar-plugin</artifactId>
                 <version>${maven-jar-plugin.version}</version>
             </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <version>${maven-deploy-plugin.version}</version>
+            </plugin>
         </plugins>
     </build>
 
 
+    <!-- deploy to maven repository should specify these tag.(部署到maven中央仓库必须指定下面的标签) -->
+    <name>storage</name>
+    <description>zfoo storage is Java pojo and excel/csv/json automatic mapping framework</description>
+    <url>https://github.com/zfoo-project/zfoo</url>
+
+    <developers>
+        <developer>
+            <name>all contributors</name>
+            <email>all@zfoo.com</email>
+            <url>https://github.com/zfoo-project/zfoo</url>
+        </developer>
+    </developers>
+
+    <organization>
+        <name>zfoo</name>
+        <url>https://github.com/zfoo-project/zfoo</url>
+    </organization>
+
+    <licenses>
+        <license>
+            <name>Apache License 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+
+    <scm>
+        <connection>https://github.com/zfoo-project/zfoo.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com:zfoo-project/zfoo.git</developerConnection>
+        <url>https://github.com/zfoo-project/zfoo</url>
+    </scm>
+
+    <profiles>
+        <profile>
+            <id>ossrh</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.sonatype.plugins</groupId>
+                        <artifactId>nexus-staging-maven-plugin</artifactId>
+                        <version>${nexus-staging-maven-plugin.version}</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <serverId>ossrh</serverId>
+                            <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
+                            <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                        </configuration>
+                    </plugin>
+
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>${maven-source-plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>${maven-javadoc-plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>${maven-gpg-plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                </plugins>
+            </build>
+
+            <distributionManagement>
+                <repository>
+                    <id>ossrh</id>
+                    <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+                </repository>
+            </distributionManagement>
+        </profile>
+    </profiles>
 </project>

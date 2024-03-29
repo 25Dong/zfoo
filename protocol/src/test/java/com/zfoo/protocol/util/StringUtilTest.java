@@ -17,8 +17,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public class StringUtilTest {
 

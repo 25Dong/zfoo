@@ -12,23 +12,14 @@
 
 package com.zfoo.net.packet.udp;
 
-import com.zfoo.protocol.IPacket;
+import com.zfoo.protocol.anno.Protocol;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
-public class UdpHelloRequest implements IPacket {
-
-    public static final transient short PROTOCOL_ID = 1200;
-
+@Protocol(id = 1200)
+public class UdpHelloRequest {
     private String message;
-
-
-    @Override
-    public short protocolId() {
-        return PROTOCOL_ID;
-    }
 
     public String getMessage() {
         return message;

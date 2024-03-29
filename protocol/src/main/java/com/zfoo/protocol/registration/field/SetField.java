@@ -19,8 +19,7 @@ import com.zfoo.protocol.serializer.reflect.SetSerializer;
 import java.lang.reflect.Type;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public class SetField implements IFieldRegistration {
 

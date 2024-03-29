@@ -13,24 +13,37 @@
 package com.zfoo.protocol.serializer;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 public enum CodeLanguage {
 
     /**
      * Javassist字节码增强
      */
-    Enhance,
+    Enhance(1),
 
-    JavaScript,
+    Cpp(1 << 1),
 
-    Lua,
+    Go(1 << 2),
 
-    CSharp,
+    JavaScript(1 << 3),
 
-    GdScript,
+    TypeScript(1 << 4),
 
-    Protobuf
+    Lua(1 << 5),
+
+    CSharp(1 << 6),
+
+    GdScript(1 << 7),
+
+    Python(1 << 8),
+
+    Protobuf(1 << 12);
+
+    public final int id;
+
+    private CodeLanguage(int id) {
+        this.id = id;
+    }
 
 }

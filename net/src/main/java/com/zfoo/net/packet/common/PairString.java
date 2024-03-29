@@ -13,15 +13,13 @@
 
 package com.zfoo.net.packet.common;
 
-import com.zfoo.protocol.IPacket;
+import com.zfoo.protocol.anno.Protocol;
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
-public class PairString implements IPacket {
-
-    public static final transient short PROTOCOL_ID = 112;
+@Protocol(id = 112)
+public class PairString {
 
     private String key;
 
@@ -32,11 +30,6 @@ public class PairString implements IPacket {
         pair.key = key;
         pair.value = value;
         return pair;
-    }
-
-    @Override
-    public short protocolId() {
-        return PROTOCOL_ID;
     }
 
     public String getKey() {

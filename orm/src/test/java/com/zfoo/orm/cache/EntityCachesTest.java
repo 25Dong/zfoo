@@ -16,8 +16,8 @@ package com.zfoo.orm.cache;
 import com.mongodb.client.model.Filters;
 import com.zfoo.orm.OrmContext;
 import com.zfoo.orm.entity.UserEntity;
-import com.zfoo.orm.model.cache.IEntityCaches;
-import com.zfoo.util.ThreadUtils;
+import com.zfoo.protocol.util.ThreadUtils;
+import com.zfoo.scheduler.util.TimeUtils;
 import org.bson.Document;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -25,8 +25,7 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 
 /**
- * @author jaysunxiao
- * @version 3.0
+ * @author godotg
  */
 @Ignore
 public class EntityCachesTest {
@@ -37,7 +36,8 @@ public class EntityCachesTest {
         var context = new ClassPathXmlApplicationContext("application.xml");
 
         // 动态去拿到UserEntity的EntityCaches
-        var userEntityCaches = (IEntityCaches<Long, UserEntity>) OrmContext.getOrmManager().getEntityCaches(UserEntity.class);
+        @SuppressWarnings("unchecked")
+        var userEntityCaches = (IEntityCache<Long, UserEntity>) OrmContext.getOrmManager().getEntityCaches(UserEntity.class);
 
         for (var i = 1; i <= 10; i++) {
             var entity = userEntityCaches.load((long) i);
@@ -46,7 +46,9 @@ public class EntityCachesTest {
             userEntityCaches.update(entity);
         }
 
-        ThreadUtils.sleep(Long.MAX_VALUE);
+        ThreadUtils.sleep(60 * TimeUtils.MILLIS_PER_SECOND);
+
+        userEntityCaches.load(1L);
     }
 
 
