@@ -93,7 +93,7 @@ public class GatewayTest {
 
         // 这里的地址是网关的地址
         var client = new TcpClient(HostAndPort.valueOf("127.0.0.1:9000"));
-        var session = client.start();
+        var session = client.start();//连接到网关
 
         var executorSize = Runtime.getRuntime().availableProcessors() * 2;
         var executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());

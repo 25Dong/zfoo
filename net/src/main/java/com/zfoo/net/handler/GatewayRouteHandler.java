@@ -38,6 +38,7 @@ import java.util.Objects;
 import java.util.function.BiFunction;
 
 /**
+ * 网关路由处理器
  * @author godotg
  */
 @ChannelHandler.Sharable
