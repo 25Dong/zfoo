@@ -24,6 +24,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * id类型为int的配置存储
+ *
  * @author godotg
  */
 public class StorageInt<K, V> extends AbstractStorage<K, V> {

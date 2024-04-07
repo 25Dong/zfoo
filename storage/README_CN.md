@@ -76,3 +76,8 @@ StudentResource student = storage.getUniqueIndex(StudentResource::idCard, "11010
 
 - 财务分析，数据分析统计
 - 游戏中的数值配置
+
+### Ⅳ. 区别
+- 配置实体类和存储管理对象不用强定义
+- 不被引用的配置资源自动释放
+- 根据不同的主键类型，创建不同的存储器对象

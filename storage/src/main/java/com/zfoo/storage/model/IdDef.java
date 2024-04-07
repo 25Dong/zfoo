@@ -19,6 +19,7 @@ import com.zfoo.storage.anno.Id;
 import java.lang.reflect.Field;
 
 /**
+ * 主键
  * @author godotg
  */
 public class IdDef {

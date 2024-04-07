@@ -322,9 +322,9 @@ public abstract class ReflectionUtils {
     // 获取class中的普通field属性字段
     public static List<Field> notStaticAndTransientFields(Class<?> clazz) {
         return Arrays.stream(clazz.getDeclaredFields())
-                .filter(it -> !Modifier.isStatic(it.getModifiers()))
-                .filter(it -> !Modifier.isTransient(it.getModifiers()))
-                .filter(it -> !it.isAnnotationPresent(Transient.class))
+                .filter(it -> !Modifier.isStatic(it.getModifiers()))//过滤掉静态的
+                .filter(it -> !Modifier.isTransient(it.getModifiers()))//过滤掉transient
+                .filter(it -> !it.isAnnotationPresent(Transient.class))//过滤掉@Transient
                 .toList();
     }
 

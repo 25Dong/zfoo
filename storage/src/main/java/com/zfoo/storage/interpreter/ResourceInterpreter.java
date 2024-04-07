@@ -81,14 +81,14 @@ public class ResourceInterpreter {
                 var params = new Object[fieldInfos.size()];
 
                 for (var fieldInfo : fieldInfos) {
-                    var content = columns.get(fieldInfo.index);
+                    var content = columns.get(fieldInfo.index);//配置的内容
                     if (StringUtils.isNotEmpty(content) || fieldInfo.field.getType() == String.class) {
                         var targetType = new TypeDescriptor(fieldInfo.field);
-                        var value = conversionServiceFactoryBean.getObject().convert(content, TYPE_DESCRIPTOR, targetType);
+                        var value = conversionServiceFactoryBean.getObject().convert(content, TYPE_DESCRIPTOR, targetType);//根据对应的转换器->对应的对象
                         params[index++] = value;
                     }
                 }
-                var instance = ReflectionUtils.newInstance(constructor, params);
+                var instance = ReflectionUtils.newInstance(constructor, params);//一行数据生成一个对象
                 result.add(instance);
             }
         } else {

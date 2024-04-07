@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * 配置存储接口
  * @author godotg
  */
 public interface IStorage<K, V> {

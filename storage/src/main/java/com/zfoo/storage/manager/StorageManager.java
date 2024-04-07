@@ -190,7 +190,10 @@ public class StorageManager implements IStorageManager {
     @Override
     public void initAfter() {
         if (storageConfig.isRecycle()) {
-            storageMap.entrySet().stream().filter(it -> it.getValue().isRecycle()).map(it -> it.getValue()).forEach(it -> it.recycleStorage());
+            storageMap.entrySet().stream()
+                    .filter(it -> it.getValue().isRecycle())
+                    .map(it -> it.getValue())
+                    .forEach(it -> it.recycleStorage());
         } else {
             storageMap.entrySet().stream().map(it -> it.getValue()).forEach(it -> it.setRecycle(false));
         }
@@ -304,7 +307,9 @@ public class StorageManager implements IStorageManager {
                 var packageSearchPath = StringUtils.format("{}/**/{}.*", resourceLocation, fileName);
                 packageSearchPath = packageSearchPath.replaceAll("//", "/");
                 try {
-                    Arrays.stream(resourcePatternResolver.getResources(packageSearchPath)).filter(it -> StorageEnum.containsResourceEnum(FileUtils.fileExtName(it.getFilename()))).forEach(it -> resources.add(it));
+                    Arrays.stream(resourcePatternResolver.getResources(packageSearchPath))
+                            .filter(it -> StorageEnum.containsResourceEnum(FileUtils.fileExtName(it.getFilename())))
+                            .forEach(it -> resources.add(it));
                 } catch (Exception e) {
                     // do nothing
                 }

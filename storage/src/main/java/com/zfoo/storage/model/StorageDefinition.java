@@ -15,18 +15,26 @@ package com.zfoo.storage.model;
 import org.springframework.core.io.Resource;
 
 /**
+ * 配置定义信息
+ *
  * @author godotg
  */
 public class StorageDefinition {
 
+    /**
+     * 配置映射的实体类（@Storage标注的类）
+     */
     private final Class<?> clazz;
+
+    /**
+     * 对应的配置资源
+     */
     private final Resource resource;
 
     public StorageDefinition(Class<?> clazz, Resource resource) {
         this.clazz = clazz;
         this.resource = resource;
     }
-
 
     public Class<?> getClazz() {
         return clazz;
@@ -35,5 +43,4 @@ public class StorageDefinition {
     public Resource getResource() {
         return resource;
     }
-
 }
